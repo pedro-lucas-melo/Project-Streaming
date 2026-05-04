@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ series }}</title>
+
+    <style>
+        body {
+            background: #111;
+            color: white;
+            text-align: center;
+        }
+
+        .card {
+            display: block;
+            width: 300px;
+            margin: 10px auto;
+            padding: 15px;
+            background: #222;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h1>{{ series }}</h1>
+
+{% for season in seasons %}
+    <a class="card" href="/season?series={{ series }}&season={{ season }}">
+        {{ season }}
+    </a>
+{% endfor %}
+
+<br>
+<a href="/">← Voltar</a>
+
+</body>
+</html>

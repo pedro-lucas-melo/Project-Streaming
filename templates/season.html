@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ season }}</title>
+
+    <style>
+        body {
+            background: #111;
+            color: white;
+            text-align: center;
+        }
+
+        .card {
+            display: block;
+            width: 400px;
+            margin: 10px auto;
+            padding: 15px;
+            background: #222;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h1>{{ series }} - {{ season }}</h1>
+
+{% for ep in episodes %}
+    <a class="card" href="/watch?path={{ ep.path }}">
+        {{ ep.name }}
+    </a>
+{% endfor %}
+
+<br>
+<a href="/series?name={{ series }}">← Voltar</a>
+
+</body>
+</html>

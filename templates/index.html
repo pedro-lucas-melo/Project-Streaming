@@ -11,56 +11,40 @@
             text-align: center;
         }
 
-        h1, h2 {
-            margin-top: 20px;
-        }
-
-        .season {
-            margin: 30px 0;
-        }
-
-        .episode {
-            width: 400px;
-            margin: 10px auto;
+        .grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
         }
 
         .card {
-            display: block;
-            padding: 15px;
+            width: 200px;
+            padding: 20px;
             background: #222;
             border-radius: 8px;
-            transition: 0.2s;
             text-decoration: none;
             color: white;
+            transition: 0.2s;
         }
 
         .card:hover {
             background: #333;
-            transform: scale(1.02);
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
 
-<h1>🎬 Meu Streaming</h1>
+<h1>🎬 Séries</h1>
 
-{% for series, seasons in structure.items() %}
-    <h2>{{ series }}</h2>
-
-    {% for season, episodes in seasons.items() %}
-        <div class="season">
-            <h3>{{ season }}</h3>
-
-            {% for ep in episodes %}
-                <div class="episode">
-                    <a class="card" href="/watch?path={{ ep.path }}">
-                        {{ ep.name }}
-                    </a>
-                </div>
-            {% endfor %}
-        </div>
+<div class="grid">
+    {% for s in series %}
+        <a class="card" href="/series?name={{ s }}">
+            {{ s }}
+        </a>
     {% endfor %}
-{% endfor %}
+</div>
 
 </body>
 </html>
