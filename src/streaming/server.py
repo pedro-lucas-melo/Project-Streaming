@@ -1,6 +1,8 @@
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
+import jinja2
+import aiohttp_jinja2
 
 
 class StreamingServer:
@@ -10,28 +12,25 @@ class StreamingServer:
         self.app = web.Application()
 
         self._setup_routes()
+        aiohttp_jinja2.setup(
+            self.app,
+            loader=jinja2.FileSystemLoader("templates")
+        )
 
     def _setup_routes(self):
         self.app.router.add_get("/", self.handle_index)
         self.app.router.add_get("/video", self.handle_video)
+        self.app.router.add_get("/watch", self.handle_watch)
 
+    @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
         videos = self.library.list_videos()
-
-        response_text = "<h1>Lista de Vídeos</h1><ul>"
-
-        for video in videos:
-            response_text += (
-                f"<li>"
-                f"<a href='/video?path={video['path']}'>"
-                f"{video['relative_path']}"
-                f"</a>"
-                f"</li>"
-            )
-
-        response_text += "</ul>"
-
-        return web.Response(text=response_text, content_type="text/html")
+        return {"videos": videos}
+    
+    @aiohttp_jinja2.template("player.html")
+    async def handle_watch(self, request):
+        path = request.query.get("path")
+        return {"path": path}
     
     async def handle_video(self, request):
         file_path = request.query.get("path")
