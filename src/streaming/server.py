@@ -25,8 +25,8 @@ class StreamingServer:
 
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
-        videos = self.library.list_videos()
-        return {"videos": videos}
+        structure = self.library.get_structure()
+        return {"structure": structure}
     
     @aiohttp_jinja2.template("player.html")
     async def handle_watch(self, request):

@@ -23,7 +23,36 @@ class MediaLibrary:
                     })
 
         return videos
+    
+    def get_structure(self):
+        structure = {}
 
+        for root, dirs, files in os.walk(self.media_dir):
+            relative_root = os.path.relpath(root, self.media_dir)
+
+            if relative_root == ".":
+                continue
+
+            parts = relative_root.split(os.sep)
+
+            if len(parts) == 1:
+                structure.setdefault(parts[0], {})
+
+            elif len(parts) == 2:
+                series, season = parts
+                structure.setdefault(series, {})
+                structure[series].setdefault(season, [])
+
+                for file in files:
+                    if file.lower().endswith(self.SUPPORTED_EXTENSIONS):
+                        full_path = os.path.join(root, file)
+
+                        structure[series][season].append({
+                            "name": file,
+                            "path": full_path
+                        })
+
+        return structure
 if __name__ == "__main__":
     from streaming.config import ConfigManager
 
