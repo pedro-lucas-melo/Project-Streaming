@@ -2,36 +2,59 @@
 <html>
 <head>
     <title>Player</title>
+
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             background: black;
             color: white;
-            text-align: center;
             font-family: Arial;
+            overflow: hidden; /* 🚫 remove scroll */
+        }
+
+        .back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .back a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         video {
-            width: 90%;
-            margin-top: 20px;
-        }
-
-        a {
-            color: white;
-            display: inline-block;
-            margin-top: 20px;
+            max-width: 100%;
+            max-height: 100%;
         }
     </style>
 </head>
 <body>
 
-<h2>Reproduzindo</h2>
+<div class="back">
+    <a href="/">← Voltar</a>
+</div>
 
-<video controls autoplay>
-    <source src="/video?path={{ path }}">
-</video>
-
-<br>
-<a href="/">← Voltar</a>
+<div class="container">
+    <video controls autoplay>
+        <source src="/video?path={{ path }}">
+    </video>
+</div>
 
 </body>
 </html>
