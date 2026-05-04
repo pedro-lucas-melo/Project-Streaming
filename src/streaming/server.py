@@ -1,3 +1,5 @@
+from urllib import request
+
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
@@ -22,12 +24,52 @@ class StreamingServer:
         self.app.router.add_get("/", self.handle_index)
         self.app.router.add_get("/video", self.handle_video)
         self.app.router.add_get("/watch", self.handle_watch)
+        self.app.router.add_get("/series", self.handle_series)
+        self.app.router.add_get("/season", self.handle_season)
 
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
         structure = self.library.get_structure()
-        return {"structure": structure}
+        series_list = list(structure.keys())
+
+        return {"series": series_list}
     
+    @aiohttp_jinja2.template("series.html")
+    async def handle_series(self, request):
+        series_name = request.query.get("name")
+
+        if not series_name:
+            return web.Response(text="Série não especificada", status=400)
+
+        structure = self.library.get_structure()
+        seasons = structure.get(series_name, {})
+
+        return {
+            "series": series_name,
+            "seasons": sorted(seasons.keys())
+        }
+    
+    @aiohttp_jinja2.template("season.html")
+    async def handle_season(self, request):
+        series_name = request.query.get("series")
+        season_name = request.query.get("season")
+
+        if not series_name or not season_name:
+            return web.Response(text="Parâmetros inválidos", status=400)
+
+        structure = self.library.get_structure()
+
+        episodes = sorted(
+            structure.get(series_name, {}).get(season_name, []),
+            key=lambda x: x["name"]
+        )
+
+        return {
+            "series": series_name,
+            "season": season_name,
+            "episodes": episodes
+        }
+
     @aiohttp_jinja2.template("player.html")
     async def handle_watch(self, request):
         path = request.query.get("path")
