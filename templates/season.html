@@ -7,33 +7,60 @@
         body {
             background: #111;
             color: white;
+            font-family: Arial;
             text-align: center;
         }
 
+        .lista {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
         .card {
-            display: block;
-            width: 400px;
-            margin: 10px auto;
-            padding: 15px;
             background: #222;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 10px;
+            width: 500px;
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            background: #444;
+            transform: scale(1.02);
+            cursor: pointer;
+        }
+
+        a {
             text-decoration: none;
             color: white;
         }
+
+        .voltar {
+            display: inline-block;
+            margin-top: 30px;
+            color: #aaa;
+        }
     </style>
 </head>
-<body>
+<body tabindex="0">
 
-<h1>{{ series }} - {{ season }}</h1>
+<h1>{{ series }} — {{ season }}</h1>
 
-{% for ep in episodes %}
-    <a class="card" href="/watch?path={{ ep.path }}">
-        {{ ep.name }}
-    </a>
-{% endfor %}
+<div class="lista">
+    {% for ep in episodes %}
+        <a href="/watch?path={{ ep.path }}">
+            <div class="card" {% if loop.first %}autofocus{% endif %}>
+                {{ ep.name }}
+            </div>
+        </a>
+    {% endfor %}
+</div>
 
 <br>
-<a href="/series?name={{ series }}">← Voltar</a>
+<a class="voltar" href="/series?name={{ series }}">← Voltar</a>
 
 </body>
 </html>
