@@ -1,5 +1,3 @@
-from urllib import request
-
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
@@ -47,6 +45,41 @@ class StreamingServer:
         ):
             return web.Response(text="Acesso negado", status=403)
 
+        file_size = os.path.getsize(file_path)
+        range_header = request.headers.get("Range", None)
+
+        headers = {
+            "Accept-Ranges": "bytes",
+            "Content-Type": "video/mp4"
+        }
+
+        if range_header:
+            start, end = range_header.replace("bytes=", "").split("-")
+            start = int(start)
+            end = int(end) if end else file_size - 1
+            
+            if start >= file_size:
+                return web.Response(status=416)
+
+            length = end - start + 1
+
+            headers.update({
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Content-Length": str(length),
+            })
+
+            with open(file_path, "rb") as f:
+                f.seek(start)
+                chunk = f.read(length)
+
+            return web.Response(
+                status=206,
+                body=chunk,
+                headers=headers
+            )
+
+
+        # fallback (arquivo inteiro)
         return web.FileResponse(path=file_path)
 
     def run(self):
