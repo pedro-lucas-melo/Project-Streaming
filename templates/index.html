@@ -2,17 +2,57 @@
 <html>
 <head>
     <title>Streaming</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .card {
+            background: #222;
+            padding: 10px;
+            border-radius: 8px;
+            width: 250px;
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            background: #333;
+            transform: scale(1.03);
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <h1>Lista de Vídeos</h1>
-    <ul>
-        {% for video in videos %}
-            <li>
-                <a href="/watch?path={{ video.path }}">
-                    {{ video.relative_path }}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
+
+<h1>🎬 Meu Streaming</h1>
+
+<div class="grid">
+    {% for video in videos %}
+        <div class="card">
+            <a href="/watch?path={{ video.path }}">
+                <p>{{ video.name }}</p>
+            </a>
+        </div>
+    {% endfor %}
+</div>
+
 </body>
 </html>

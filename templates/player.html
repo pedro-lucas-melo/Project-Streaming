@@ -2,16 +2,36 @@
 <html>
 <head>
     <title>Player</title>
+    <style>
+        body {
+            background: black;
+            color: white;
+            text-align: center;
+            font-family: Arial;
+        }
+
+        video {
+            width: 90%;
+            margin-top: 20px;
+        }
+
+        a {
+            color: white;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Reproduzindo</h1>
 
-    <video width="800" controls>
-        <source src="/video?path={{ path }}">
-        Seu navegador não suporta vídeo.
-    </video>
+<h2>Reproduzindo</h2>
 
-    <br><br>
-    <a href="/">← Voltar</a>
+<video controls autoplay>
+    <source src="/video?path={{ path }}">
+</video>
+
+<br>
+<a href="/">← Voltar</a>
+
 </body>
 </html>
