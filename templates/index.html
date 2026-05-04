@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streaming</title>
+</head>
+<body>
+    <h1>Lista de Vídeos</h1>
+    <ul>
+        {% for video in videos %}
+            <li>
+                <a href="/watch?path={{ video.path }}">
+                    {{ video.relative_path }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
