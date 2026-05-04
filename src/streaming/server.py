@@ -86,7 +86,10 @@ class StreamingServer:
             os.path.abspath(self.config.media_dir)
         ):
             return web.Response(text="Acesso negado", status=403)
-
+        
+        if not os.path.isfile(file_path):
+            return web.Response(text="Arquivo inválido", status=404)
+        
         file_size = os.path.getsize(file_path)
         range_header = request.headers.get("Range", None)
 
