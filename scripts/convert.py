@@ -5,8 +5,8 @@ import subprocess
 # carrega .env
 load_dotenv()
 
-INPUT_DIR = os.getenv("MEDIA_DIR")
-OUTPUT_DIR = INPUT_DIR + "_converted"
+INPUT_DIR = os.getenv("MEDIA_SOURCE_DIR")
+OUTPUT_DIR = os.getenv("MEDIA_DIR")
 
 
 def convert_video(input_path, output_path):
