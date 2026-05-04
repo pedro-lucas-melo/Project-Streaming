@@ -7,33 +7,60 @@
         body {
             background: #111;
             color: white;
+            font-family: Arial;
             text-align: center;
         }
 
+        .grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
         .card {
-            display: block;
-            width: 300px;
-            margin: 10px auto;
-            padding: 15px;
             background: #222;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 10px;
+            width: 200px;
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            background: #444;
+            transform: scale(1.05);
+            cursor: pointer;
+        }
+
+        a {
             text-decoration: none;
             color: white;
         }
+
+        .voltar {
+            display: inline-block;
+            margin-top: 30px;
+            color: #aaa;
+        }
     </style>
 </head>
-<body>
+<body tabindex="0">
 
 <h1>{{ series }}</h1>
 
-{% for season in seasons %}
-    <a class="card" href="/season?series={{ series }}&season={{ season }}">
-        {{ season }}
-    </a>
-{% endfor %}
+<div class="grid">
+    {% for season in seasons %}
+        <a href="/season?series={{ series }}&season={{ season }}">
+            <div class="card" {% if loop.first %}autofocus{% endif %}>
+                {{ season }}
+            </div>
+        </a>
+    {% endfor %}
+</div>
 
 <br>
-<a href="/">← Voltar</a>
+<a class="voltar" href="/">← Voltar</a>
 
 </body>
 </html>
