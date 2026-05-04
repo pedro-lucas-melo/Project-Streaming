@@ -12,6 +12,7 @@ aiohttp = "^3.9"
 jinja2 = "^3.1"
 python-dotenv = "^1.0"
 aiofiles = "^23.2"
+aiohttp-jinja2 = "^1.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
