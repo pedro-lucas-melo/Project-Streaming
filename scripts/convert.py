@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-INPUT_DIR = r"C:\Users\PedroMelo\OneDrive\Documents\Projeto Streaming\videos"
+INPUT_DIR = r"C:\Users\PedroMelo\Documents\Projeto Streaming\videos"
 OUTPUT_DIR = INPUT_DIR + "_converted"
 
 
