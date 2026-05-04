@@ -1,7 +1,11 @@
+from dotenv import load_dotenv
 import os
 import subprocess
 
-INPUT_DIR = r"C:\Users\PedroMelo\Documents\Projeto Streaming\videos"
+# carrega .env
+load_dotenv()
+
+INPUT_DIR = os.getenv("MEDIA_DIR")
 OUTPUT_DIR = INPUT_DIR + "_converted"
 
 
