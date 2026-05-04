@@ -1,0 +1,23 @@
+# Ambiente Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Poetry
+poetry.lock
+
+# Variáveis de ambiente (NUNCA commitar)
+.env
+
+# VS Code
+.vscode/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Mídia (seus vídeos ficam locais, não vão pro GitHub)
+media/
