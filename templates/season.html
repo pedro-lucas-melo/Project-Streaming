@@ -32,46 +32,15 @@
             transform: scale(1.02);
         }
 
+        a {
+            text-decoration: none;
+            color: white;
+        }
+
         .voltar {
             display: inline-block;
             margin-top: 30px;
             color: #aaa;
-            text-decoration: none;
-        }
-
-        #overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: black;
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #overlay.ativo {
-            display: flex;
-        }
-
-        #overlay video {
-            width: 100%;
-            height: 100%;
-        }
-
-        #fechar {
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 10000;
-            color: white;
-            background: rgba(0,0,0,0.5);
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
     </style>
 </head>
@@ -81,73 +50,16 @@
 
 <div class="lista">
     {% for ep in episodes %}
-        <div class="card" data-path="{{ ep.path }}">
-            {{ ep.name }}
-        </div>
+        <a href="/watch?path={{ ep.path }}">
+            <div class="card" {% if loop.first %}autofocus{% endif %}>
+                {{ ep.name }}
+            </div>
+        </a>
     {% endfor %}
 </div>
 
 <br>
 <a class="voltar" href="/series?name={{ series }}">← Voltar</a>
-
-<div id="overlay">
-    <button id="fechar">← Voltar</button>
-    <video id="video" controls autoplay>
-        <source id="video-src" src="">
-    </video>
-</div>
-
-<script>
-    let timeoutVoltar;
-
-    function mostrarVoltar() {
-        const btn = document.getElementById("fechar");
-        btn.style.opacity = "1";
-        clearTimeout(timeoutVoltar);
-        timeoutVoltar = setTimeout(function() {
-            btn.style.opacity = "0";
-        }, 3000);
-    }
-
-    document.getElementById("overlay").addEventListener("mousemove", mostrarVoltar);
-
-    document.querySelectorAll(".card").forEach(function(card) {
-        card.addEventListener("click", function() {
-            const path = this.dataset.path;
-            const overlay = document.getElementById("overlay");
-            const video = document.getElementById("video");
-            const src = document.getElementById("video-src");
-
-            src.src = "/video?path=" + encodeURIComponent(path);
-            video.load();
-            overlay.classList.add("ativo");
-
-            overlay.requestFullscreen().then(function() {
-                // Funcionou — está no PC
-                mostrarVoltar();
-            }).catch(function() {
-                // Bloqueado — está na TV, navega para o player dedicado
-                video.pause();
-                video.src = "";
-                overlay.classList.remove("ativo");
-                window.location.href = "/watch?path=" + encodeURIComponent(path);
-            });
-        });
-    });
-
-    document.getElementById("fechar").addEventListener("click", function() {
-        const overlay = document.getElementById("overlay");
-        const video = document.getElementById("video");
-
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        }
-
-        video.pause();
-        video.src = "";
-        overlay.classList.remove("ativo");
-    });
-</script>
 
 </body>
 </html>
