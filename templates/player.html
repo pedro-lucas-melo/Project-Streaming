@@ -56,5 +56,18 @@
     </video>
 </div>
 
+<script>
+    const video = document.querySelector("video");
+
+    video.addEventListener("play", function handler() {
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+        }
+        video.removeEventListener("play", handler); // dispara só uma vez
+    });
+</script>
+
 </body>
 </html>
