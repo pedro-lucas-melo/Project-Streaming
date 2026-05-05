@@ -11,7 +11,8 @@ import os
 class StreamingServer:
     def __init__(self):
         self.config = ConfigManager()
-        self.library = MediaLibrary(self.config.media_dir)
+        self.series_library = MediaLibrary(self.config.media_series_dir)
+        self.movies_library = MediaLibrary(self.config.media_movies_dir) if self.config.media_movies_dir else None
         self.app = web.Application()
 
         self._setup_routes()
@@ -21,15 +22,19 @@ class StreamingServer:
         )
 
     def _setup_routes(self):
-        self.app.router.add_get("/", self.handle_index)
+        self.app.router.add_get("/", self.handle_home)
         self.app.router.add_get("/video", self.handle_video)
         self.app.router.add_get("/watch", self.handle_watch)
         self.app.router.add_get("/series", self.handle_series)
         self.app.router.add_get("/season", self.handle_season)
 
+    @aiohttp_jinja2.template("home.html")
+    async def handle_home(self, request):
+        return {}
+    
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
-        structure = self.library.get_structure()
+        structure = self.series_library.get_structure()
         series_list = list(structure.keys())
 
         return {"series": series_list}
@@ -41,7 +46,7 @@ class StreamingServer:
         if not series_name:
             return web.Response(text="Série não especificada", status=400)
 
-        structure = self.library.get_structure()
+        structure = self.series_library.get_structure()
         seasons = structure.get(series_name, {})
 
         return {
@@ -57,7 +62,7 @@ class StreamingServer:
         if not series_name or not season_name:
             return web.Response(text="Parâmetros inválidos", status=400)
 
-        structure = self.library.get_structure()
+        structure = self.series_library.get_structure()
 
         episodes = sorted(
             structure.get(series_name, {}).get(season_name, []),
