@@ -1,5 +1,3 @@
-from urllib import request
-
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
@@ -22,54 +20,60 @@ class StreamingServer:
         )
 
     def _setup_routes(self):
-        self.app.router.add_get("/", self.handle_index)
+        self.app.router.add_get("/", self.handle_home)          # Home agora é a tela inicial
+        self.app.router.add_get("/series-list", self.handle_index)  # Lista de séries
         self.app.router.add_get("/video", self.handle_video)
         self.app.router.add_get("/watch", self.handle_watch)
         self.app.router.add_get("/series", self.handle_series)
         self.app.router.add_get("/season", self.handle_season)
-        self.app.router.add_get("/home", self.handle_home)
+        self.app.router.add_get("/movies", self.handle_movies)  # Nova rota de filmes
 
     @aiohttp_jinja2.template("home.html")
     async def handle_home(self, request):
         return {}
-    
+
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
         structure = self.series_library.get_structure()
         series_list = list(structure.keys())
-
         return {"series": series_list}
-    
+
+    @aiohttp_jinja2.template("movies.html")
+    async def handle_movies(self, request):
+        if not self.movies_library:
+            return web.Response(text="Diretório de filmes não configurado", status=404)
+        videos = self.movies_library.list_videos()
+        # Ordena por nome e remove extensão para exibição
+        movies = sorted(
+            [{"name": v["name"][:-4] if v["name"].endswith((".mp4", ".mkv")) else v["name"],
+              "path": v["path"]} for v in videos],
+            key=lambda x: x["name"]
+        )
+        return {"movies": movies}
+
     @aiohttp_jinja2.template("series.html")
     async def handle_series(self, request):
         series_name = request.query.get("name")
-
         if not series_name:
             return web.Response(text="Série não especificada", status=400)
-
         structure = self.series_library.get_structure()
         seasons = structure.get(series_name, {})
-
         return {
             "series": series_name,
             "seasons": sorted(seasons.keys())
         }
-    
+
     @aiohttp_jinja2.template("season.html")
     async def handle_season(self, request):
         series_name = request.query.get("series")
         season_name = request.query.get("season")
-
         if not series_name or not season_name:
             return web.Response(text="Parâmetros inválidos", status=400)
-
         structure = self.series_library.get_structure()
-
         episodes = sorted(
             structure.get(series_name, {}).get(season_name, []),
             key=lambda x: x["name"]
         )
-
         return {
             "series": series_name,
             "season": season_name,
@@ -83,24 +87,19 @@ class StreamingServer:
 
     async def handle_video(self, request):
         file_path = request.query.get("path")
-
         if not file_path:
             return web.Response(text="Arquivo não especificado", status=400)
 
-        # 🔒 segurança (agora suporta séries e filmes)
-        allowed_paths = [
-            os.path.abspath(self.config.media_series_dir)
-        ]
-
+        allowed_paths = [os.path.abspath(self.config.media_series_dir)]
         if self.config.media_movies_dir:
             allowed_paths.append(os.path.abspath(self.config.media_movies_dir))
 
         if not any(os.path.abspath(file_path).startswith(p) for p in allowed_paths):
             return web.Response(text="Acesso negado", status=403)
-        
+
         if not os.path.isfile(file_path):
             return web.Response(text="Arquivo inválido", status=404)
-        
+
         file_size = os.path.getsize(file_path)
         range_header = request.headers.get("Range", None)
 
@@ -113,12 +112,11 @@ class StreamingServer:
             start, end = range_header.replace("bytes=", "").split("-")
             start = int(start)
             end = int(end) if end else file_size - 1
-            
+
             if start >= file_size:
                 return web.Response(status=416)
 
             length = end - start + 1
-
             headers.update({
                 "Content-Range": f"bytes {start}-{end}/{file_size}",
                 "Content-Length": str(length),
@@ -128,14 +126,8 @@ class StreamingServer:
                 f.seek(start)
                 chunk = f.read(length)
 
-            return web.Response(
-                status=206,
-                body=chunk,
-                headers=headers
-            )
+            return web.Response(status=206, body=chunk, headers=headers)
 
-
-        # fallback (arquivo inteiro)
         return web.FileResponse(path=file_path)
 
     def run(self):
