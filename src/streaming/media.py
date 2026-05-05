@@ -48,7 +48,7 @@ class MediaLibrary:
                         full_path = os.path.join(root, file)
 
                         structure[series][season].append({
-                            "name": file,
+                            "name": file[:-4] if file.endswith(".mp4") else file,
                             "path": full_path
                         })
 
