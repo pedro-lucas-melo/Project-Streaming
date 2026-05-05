@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Filmes</title>
+
+    <style>
+        body {
+            background: #111;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
+
+        .grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .card {
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            width: 200px;
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            background: #444;
+            transform: scale(1.05);
+            cursor: pointer;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+        }
+
+        .voltar {
+            display: inline-block;
+            margin-top: 30px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🎥 Filmes</h1>
+
+<div class="grid">
+    {% for movie in movies %}
+        <a href="/watch?path={{ movie.path }}">
+            <div class="card" {% if loop.first %}autofocus{% endif %}>
+                {{ movie.name }}
+            </div>
+        </a>
+    {% endfor %}
+</div>
+
+<br>
+<a class="voltar" href="/">← Voltar</a>
+
+</body>
+</html>
