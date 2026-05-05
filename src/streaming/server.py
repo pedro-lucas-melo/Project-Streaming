@@ -27,6 +27,7 @@ class StreamingServer:
         self.app.router.add_get("/watch", self.handle_watch)
         self.app.router.add_get("/series", self.handle_series)
         self.app.router.add_get("/season", self.handle_season)
+        self.app.router.add_get("/home", self.handle_home)
 
     @aiohttp_jinja2.template("home.html")
     async def handle_home(self, request):
