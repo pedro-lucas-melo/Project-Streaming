@@ -32,18 +32,13 @@
             transform: scale(1.02);
         }
 
-        a {
-            text-decoration: none;
-            color: white;
-        }
-
         .voltar {
             display: inline-block;
             margin-top: 30px;
             color: #aaa;
+            text-decoration: none;
         }
 
-        /* Overlay do player */
         #overlay {
             display: none;
             position: fixed;
@@ -84,7 +79,7 @@
 
 <div class="lista">
     {% for ep in episodes %}
-        <div class="card" onclick="abrirEpisodio('{{ ep.path }}')">
+        <div class="card" data-path="{{ ep.path }}">
             {{ ep.name }}
         </div>
     {% endfor %}
@@ -93,29 +88,30 @@
 <br>
 <a class="voltar" href="/series?name={{ series }}">← Voltar</a>
 
-<!-- Overlay player -->
 <div id="overlay">
-    <button id="fechar" onclick="fecharPlayer()">← Voltar</button>
+    <button id="fechar">← Voltar</button>
     <video id="video" controls autoplay>
         <source id="video-src" src="">
     </video>
 </div>
 
 <script>
-    function abrirEpisodio(path) {
-        const overlay = document.getElementById("overlay");
-        const video = document.getElementById("video");
-        const src = document.getElementById("video-src");
+    document.querySelectorAll(".card").forEach(function(card) {
+        card.addEventListener("click", function() {
+            const path = this.dataset.path;
+            const overlay = document.getElementById("overlay");
+            const video = document.getElementById("video");
+            const src = document.getElementById("video-src");
 
-        src.src = "/video?path=" + encodeURIComponent(path);
-        video.load();
-        overlay.classList.add("ativo");
+            src.src = "/video?path=" + encodeURIComponent(path);
+            video.load();
+            overlay.classList.add("ativo");
 
-        // Fullscreen direto — o clique no card é a interação necessária
-        overlay.requestFullscreen().catch(() => {});
-    }
+            overlay.requestFullscreen().catch(function() {});
+        });
+    });
 
-    function fecharPlayer() {
+    document.getElementById("fechar").addEventListener("click", function() {
         const overlay = document.getElementById("overlay");
         const video = document.getElementById("video");
 
@@ -126,13 +122,6 @@
         video.pause();
         video.src = "";
         overlay.classList.remove("ativo");
-    }
-
-    // Sair do fullscreen com ESC mantém o overlay aberto, fecha com o botão voltar
-    document.addEventListener("fullscreenchange", function () {
-        if (!document.fullscreenElement) {
-            // saiu do fullscreen mas não fecha o player
-        }
     });
 </script>
 
