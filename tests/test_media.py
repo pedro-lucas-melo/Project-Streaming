@@ -1,5 +1,5 @@
 from streaming.config import ConfigManager
-from media import MediaLibrary
+from streaming.media import MediaLibrary
 
 config = ConfigManager()
 
