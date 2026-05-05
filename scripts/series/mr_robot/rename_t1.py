@@ -24,12 +24,21 @@ def main():
             print(f"  - {f}")
         return
 
+    # Passo 1 — renomeia tudo para temporário (evita conflito)
     for i, arquivo in enumerate(arquivos, start=1):
-        novo_nome = f"E{i:02d} - {EPISODIOS[i]}"
-        origem = os.path.join(PASTA, arquivo)
-        destino = os.path.join(PASTA, novo_nome)
-        print(f"  {arquivo}  →  {novo_nome}")
-        os.rename(origem, destino)
+        os.rename(
+            os.path.join(PASTA, arquivo),
+            os.path.join(PASTA, f"temp_{i:02d}.mp4")
+        )
+
+    # Passo 2 — renomeia do temporário para o nome final
+    for i in range(1, len(EPISODIOS) + 1):
+        novo_nome = f"E{i:02d} - {EPISODIOS[i]}.mp4"
+        os.rename(
+            os.path.join(PASTA, f"temp_{i:02d}.mp4"),
+            os.path.join(PASTA, novo_nome)
+        )
+        print(f"  E{i:02d} - {EPISODIOS[i]}.mp4")
 
     print("\n✅ Temporada 1 renomeada!")
 
