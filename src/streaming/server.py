@@ -22,7 +22,7 @@ class StreamingServer:
         )
 
     def _setup_routes(self):
-        self.app.router.add_get("/", self.handle_home)
+        self.app.router.add_get("/", self.handle_index)
         self.app.router.add_get("/video", self.handle_video)
         self.app.router.add_get("/watch", self.handle_watch)
         self.app.router.add_get("/series", self.handle_series)
