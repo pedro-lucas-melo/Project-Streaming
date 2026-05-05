@@ -70,6 +70,8 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
     </style>
 </head>
@@ -96,6 +98,19 @@
 </div>
 
 <script>
+    let timeoutVoltar;
+
+    function mostrarVoltar() {
+        const btn = document.getElementById("fechar");
+        btn.style.opacity = "1";
+        clearTimeout(timeoutVoltar);
+        timeoutVoltar = setTimeout(function() {
+            btn.style.opacity = "0";
+        }, 3000);
+    }
+
+    document.getElementById("overlay").addEventListener("mousemove", mostrarVoltar);
+
     document.querySelectorAll(".card").forEach(function(card) {
         card.addEventListener("click", function() {
             const path = this.dataset.path;
@@ -106,8 +121,9 @@
             src.src = "/video?path=" + encodeURIComponent(path);
             video.load();
             overlay.classList.add("ativo");
-
             overlay.requestFullscreen().catch(function() {});
+
+            mostrarVoltar();
         });
     });
 

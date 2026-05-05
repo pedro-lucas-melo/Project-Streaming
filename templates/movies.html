@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Filmes</title>
-
     <style>
         body {
             background: #111;
@@ -26,23 +25,54 @@
             border-radius: 10px;
             width: 200px;
             transition: 0.2s;
+            cursor: pointer;
         }
 
         .card:hover {
             background: #444;
             transform: scale(1.05);
-            cursor: pointer;
-        }
-
-        a {
-            text-decoration: none;
-            color: white;
         }
 
         .voltar {
             display: inline-block;
             margin-top: 30px;
             color: #aaa;
+            text-decoration: none;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #overlay.ativo {
+            display: flex;
+        }
+
+        #overlay video {
+            width: 100%;
+            height: 100%;
+        }
+
+        #fechar {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 10000;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
     </style>
 </head>
@@ -52,16 +82,65 @@
 
 <div class="grid">
     {% for movie in movies %}
-        <a href="/watch?path={{ movie.path }}">
-            <div class="card" {% if loop.first %}autofocus{% endif %}>
-                {{ movie.name }}
-            </div>
-        </a>
+        <div class="card" data-path="{{ movie.path }}">
+            {{ movie.name }}
+        </div>
     {% endfor %}
 </div>
 
 <br>
 <a class="voltar" href="/">← Voltar</a>
+
+<div id="overlay">
+    <button id="fechar">← Voltar</button>
+    <video id="video" controls autoplay>
+        <source id="video-src" src="">
+    </video>
+</div>
+
+<script>
+    let timeoutVoltar;
+
+    function mostrarVoltar() {
+        const btn = document.getElementById("fechar");
+        btn.style.opacity = "1";
+        clearTimeout(timeoutVoltar);
+        timeoutVoltar = setTimeout(function() {
+            btn.style.opacity = "0";
+        }, 3000);
+    }
+
+    document.getElementById("overlay").addEventListener("mousemove", mostrarVoltar);
+
+    document.querySelectorAll(".card").forEach(function(card) {
+        card.addEventListener("click", function() {
+            const path = this.dataset.path;
+            const overlay = document.getElementById("overlay");
+            const video = document.getElementById("video");
+            const src = document.getElementById("video-src");
+
+            src.src = "/video?path=" + encodeURIComponent(path);
+            video.load();
+            overlay.classList.add("ativo");
+            overlay.requestFullscreen().catch(function() {});
+
+            mostrarVoltar();
+        });
+    });
+
+    document.getElementById("fechar").addEventListener("click", function() {
+        const overlay = document.getElementById("overlay");
+        const video = document.getElementById("video");
+
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+
+        video.pause();
+        video.src = "";
+        overlay.classList.remove("ativo");
+    });
+</script>
 
 </body>
 </html>
