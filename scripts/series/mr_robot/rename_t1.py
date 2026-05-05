@@ -15,8 +15,10 @@ EPISODIOS = {
     10: "zer0-day.avi",
 }
 
+EXTENSOES = (".mp4", ".mkv", ".mov", ".mpeg", ".avi", ".wmv", ".asf", ".flv", ".m4v", ".qt")
+
 def main():
-    arquivos = sorted([f for f in os.listdir(PASTA) if f.endswith(".mp4")])
+    arquivos = sorted([f for f in os.listdir(PASTA) if f.lower().endswith(EXTENSOES)])
 
     if len(arquivos) != len(EPISODIOS):
         print(f"⚠️  Encontrados {len(arquivos)} arquivos, esperados {len(EPISODIOS)}.")
