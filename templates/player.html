@@ -57,15 +57,23 @@
 </div>
 
 <script>
-    const video = document.querySelector("video");
+    window.addEventListener("load", function () {
+        const video = document.querySelector("video");
 
-    video.addEventListener("play", function handler() {
-        if (video.requestFullscreen) {
-            video.requestFullscreen();
-        } else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen();
+        const entrarFullscreen = () => {
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            }
+        };
+
+        // Tenta direto, se o browser bloquear aguarda o primeiro clique
+        try {
+            entrarFullscreen();
+        } catch {
+            document.addEventListener("click", entrarFullscreen, { once: true });
         }
-        video.removeEventListener("play", handler); // dispara só uma vez
     });
 </script>
 
