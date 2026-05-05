@@ -121,9 +121,17 @@
             src.src = "/video?path=" + encodeURIComponent(path);
             video.load();
             overlay.classList.add("ativo");
-            overlay.requestFullscreen().catch(function() {});
 
-            mostrarVoltar();
+            overlay.requestFullscreen().then(function() {
+                // Funcionou — está no PC
+                mostrarVoltar();
+            }).catch(function() {
+                // Bloqueado — está na TV, navega para o player dedicado
+                video.pause();
+                video.src = "";
+                overlay.classList.remove("ativo");
+                window.location.href = "/watch?path=" + encodeURIComponent(path);
+            });
         });
     });
 
