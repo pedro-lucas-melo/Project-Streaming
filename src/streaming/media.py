@@ -53,6 +53,13 @@ class MediaLibrary:
                         })
 
         return structure
+    
+    def get_series_library(series_dir):
+        return MediaLibrary(series_dir)
+
+    def get_movies_library(movies_dir):
+        return MediaLibrary(movies_dir)
+
 if __name__ == "__main__":
     from streaming.config import ConfigManager
 
