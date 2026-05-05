@@ -86,10 +86,15 @@ class StreamingServer:
         if not file_path:
             return web.Response(text="Arquivo não especificado", status=400)
 
-        # 🔒 segurança
-        if not os.path.abspath(file_path).startswith(
-            os.path.abspath(self.config.media_dir)
-        ):
+        # 🔒 segurança (agora suporta séries e filmes)
+        allowed_paths = [
+            os.path.abspath(self.config.media_series_dir)
+        ]
+
+        if self.config.media_movies_dir:
+            allowed_paths.append(os.path.abspath(self.config.media_movies_dir))
+
+        if not any(os.path.abspath(file_path).startswith(p) for p in allowed_paths):
             return web.Response(text="Acesso negado", status=403)
         
         if not os.path.isfile(file_path):
