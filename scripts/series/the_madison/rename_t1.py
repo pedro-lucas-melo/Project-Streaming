@@ -1,6 +1,6 @@
 import os
 
-PASTA = r"C:\Users\PedroMelo\Documents\Projeto Streaming\videos_converted\The Madison\Temporada 1"
+PASTA = r"C:\Users\PedroMelo\Documents\Projeto Streaming\videos_converted\series\The Madison\Temporada 1"
 
 EPISODIOS = {
     1: "Pilot",
