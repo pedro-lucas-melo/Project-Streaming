@@ -27,6 +27,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            cursor: default;
         }
 
         video {
@@ -49,7 +50,7 @@
 
             background: linear-gradient(
                 to top,
-                rgba(0,0,0,0.88),
+                rgba(0,0,0,0.92),
                 rgba(0,0,0,0.45),
                 transparent
             );
@@ -67,16 +68,29 @@
         /* ─────────────────────────────
            BARRA DE PROGRESSO
         ───────────────────────────── */
+        #progress-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+
         #progress-container {
             position: relative;
             width: 100%;
-            height: 6px;
+            height: 8px;
 
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.18);
             border-radius: 999px;
 
-            margin-bottom: 18px;
             overflow: hidden;
+
+            cursor: pointer;
+
+            transition: height 0.15s ease;
+        }
+
+        #progress-container:hover {
+            height: 10px;
         }
 
         #progress-fill {
@@ -86,11 +100,40 @@
             background: #e50914;
 
             border-radius: 999px;
-            transition: width 0.1s linear;
+            transition: width 0.08s linear;
+        }
+
+        /* Preview de tempo */
+        #progress-tooltip {
+            position: absolute;
+            bottom: 22px;
+
+            transform: translateX(-50%);
+
+            background: rgba(0,0,0,0.85);
+
+            color: white;
+
+            padding: 5px 8px;
+
+            border-radius: 6px;
+
+            font-size: 12px;
+
+            white-space: nowrap;
+
+            opacity: 0;
+            pointer-events: none;
+
+            transition: opacity 0.12s ease;
+        }
+
+        #progress-tooltip.show {
+            opacity: 1;
         }
 
         /* ─────────────────────────────
-           LINHA DOS CONTROLES
+           CONTROLES
         ───────────────────────────── */
         .controls-row {
             display: flex;
@@ -114,9 +157,6 @@
             white-space: nowrap;
         }
 
-        /* ─────────────────────────────
-           BOTÕES
-        ───────────────────────────── */
         .icon-btn {
             background: transparent;
             border: none;
@@ -126,7 +166,7 @@
 
             cursor: pointer;
 
-            opacity: 0.88;
+            opacity: 0.9;
 
             transition:
                 transform 0.15s ease,
@@ -139,7 +179,7 @@
         }
 
         /* ─────────────────────────────
-           BOTÃO VOLTAR
+           VOLTAR
         ───────────────────────────── */
         #back-top {
             position: absolute;
@@ -165,7 +205,7 @@
         }
 
         /* ─────────────────────────────
-           OVERLAY SEEK
+           SEEK OVERLAY
         ───────────────────────────── */
         #seek-overlay {
             position: absolute;
@@ -206,7 +246,7 @@
         }
 
         /* ─────────────────────────────
-           PLAY / PAUSE
+           PLAY/PAUSE
         ───────────────────────────── */
         #playpause-icon {
             position: absolute;
@@ -269,6 +309,7 @@
            MOBILE
         ───────────────────────────── */
         @media (max-width: 768px) {
+
             .seek-arrows {
                 font-size: 48px;
             }
@@ -301,20 +342,26 @@
     <!-- Loading -->
     <div id="loading">Carregando...</div>
 
-    <!-- Overlay Seek -->
+    <!-- Overlay seek -->
     <div id="seek-overlay">
         <div class="seek-arrows" id="seek-arrows">»»</div>
         <div class="seek-seconds" id="seek-seconds">+10 segundos</div>
     </div>
 
-    <!-- Overlay Play/Pause -->
+    <!-- Play/Pause -->
     <div id="playpause-icon">⏸</div>
 
-    <!-- Controles -->
+    <!-- Controls -->
     <div id="controls">
 
-        <div id="progress-container">
-            <div id="progress-fill"></div>
+        <div id="progress-wrapper">
+
+            <div id="progress-tooltip">0:00</div>
+
+            <div id="progress-container">
+                <div id="progress-fill"></div>
+            </div>
+
         </div>
 
         <div class="controls-row">
@@ -338,265 +385,345 @@
 </div>
 
 <script>
-    window.addEventListener("load", () => {
+window.addEventListener("load", () => {
 
-        const video            = document.getElementById("video");
-        const controls         = document.getElementById("controls");
-        const backTop          = document.getElementById("back-top");
+    const video             = document.getElementById("video");
+    const controls          = document.getElementById("controls");
+    const backTop           = document.getElementById("back-top");
 
-        const progressFill     = document.getElementById("progress-fill");
-        const timeDisplay      = document.getElementById("time-display");
+    const progressContainer = document.getElementById("progress-container");
+    const progressFill      = document.getElementById("progress-fill");
+    const progressTooltip   = document.getElementById("progress-tooltip");
 
-        const seekOverlay      = document.getElementById("seek-overlay");
-        const seekArrows       = document.getElementById("seek-arrows");
-        const seekSeconds      = document.getElementById("seek-seconds");
+    const timeDisplay       = document.getElementById("time-display");
 
-        const playpauseIcon    = document.getElementById("playpause-icon");
+    const seekOverlay       = document.getElementById("seek-overlay");
+    const seekArrows        = document.getElementById("seek-arrows");
+    const seekSeconds       = document.getElementById("seek-seconds");
 
-        const fullscreenBtn    = document.getElementById("fullscreen-btn");
+    const playpauseIcon     = document.getElementById("playpause-icon");
 
-        const loading          = document.getElementById("loading");
+    const fullscreenBtn     = document.getElementById("fullscreen-btn");
 
-        let hideControlsTimer;
-        let seekOverlayTimer;
+    const loading           = document.getElementById("loading");
 
-        /* ─────────────────────────────
-           FULLSCREEN
-        ───────────────────────────── */
-        function goFullscreen() {
-            const el = document.documentElement;
+    let hideControlsTimer;
+    let seekOverlayTimer;
 
-            if (document.fullscreenElement) return;
+    let isDragging = false;
 
-            if (el.requestFullscreen) {
-                el.requestFullscreen();
-            }
-            else if (el.webkitRequestFullscreen) {
-                el.webkitRequestFullscreen();
-            }
+    /* ─────────────────────────────
+       FULLSCREEN
+    ───────────────────────────── */
+    function goFullscreen() {
+
+        const el = document.documentElement;
+
+        if (document.fullscreenElement) return;
+
+        if (el.requestFullscreen) {
+            el.requestFullscreen();
+        }
+        else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+        }
+    }
+
+    try {
+        goFullscreen();
+    }
+    catch {
+        document.addEventListener("click", goFullscreen, { once: true });
+    }
+
+    fullscreenBtn.addEventListener("click", goFullscreen);
+
+    /* ─────────────────────────────
+       FORMATA TEMPO
+    ───────────────────────────── */
+    function formatTime(seconds) {
+
+        seconds = Math.floor(seconds);
+
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+
+        if (h > 0) {
+            return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
         }
 
-        try {
-            goFullscreen();
-        } catch {
-            document.addEventListener("click", goFullscreen, { once: true });
-        }
+        return `${m}:${String(s).padStart(2, "0")}`;
+    }
 
-        fullscreenBtn.addEventListener("click", goFullscreen);
+    /* ─────────────────────────────
+       CONTROLES
+    ───────────────────────────── */
+    function showControls() {
 
-        /* ─────────────────────────────
-           FORMATA TEMPO
-        ───────────────────────────── */
-        function formatTime(seconds) {
+        controls.classList.add("visible");
+        backTop.classList.add("visible");
 
-            seconds = Math.floor(seconds);
+        clearTimeout(hideControlsTimer);
 
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = seconds % 60;
+        hideControlsTimer = setTimeout(() => {
 
-            if (h > 0) {
-                return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-            }
-
-            return `${m}:${String(s).padStart(2, "0")}`;
-        }
-
-        /* ─────────────────────────────
-           CONTROLES
-        ───────────────────────────── */
-        function showControls() {
-
-            controls.classList.add("visible");
-            backTop.classList.add("visible");
-
-            clearTimeout(hideControlsTimer);
-
-            hideControlsTimer = setTimeout(() => {
-
+            if (!isDragging) {
                 controls.classList.remove("visible");
                 backTop.classList.remove("visible");
-
-            }, 3500);
-        }
-
-        document.addEventListener("mousemove", showControls);
-        document.addEventListener("click", showControls);
-
-        /* ─────────────────────────────
-           BARRA DE PROGRESSO
-        ───────────────────────────── */
-        video.addEventListener("timeupdate", () => {
-
-            if (!video.duration) return;
-
-            const percent =
-                (video.currentTime / video.duration) * 100;
-
-            progressFill.style.width = percent + "%";
-
-            timeDisplay.textContent =
-                `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-        });
-
-        /* ─────────────────────────────
-           SEEK
-        ───────────────────────────── */
-        function showSeekOverlay(seconds) {
-
-            if (seconds < 0) {
-                seekArrows.innerHTML = "&#8249;&#8249;";
-                seekSeconds.textContent = "−10 segundos";
-            }
-            else {
-                seekArrows.innerHTML = "&#8250;&#8250;";
-                seekSeconds.textContent = "+10 segundos";
             }
 
-            seekOverlay.classList.add("show");
+        }, 3500);
+    }
 
-            clearTimeout(seekOverlayTimer);
+    document.addEventListener("mousemove", showControls);
+    document.addEventListener("click", showControls);
 
-            seekOverlayTimer = setTimeout(() => {
-                seekOverlay.classList.remove("show");
-            }, 500);
+    /* ─────────────────────────────
+       PROGRESSO
+    ───────────────────────────── */
+    video.addEventListener("timeupdate", () => {
+
+        if (!video.duration || isDragging) return;
+
+        const percent =
+            (video.currentTime / video.duration) * 100;
+
+        progressFill.style.width = percent + "%";
+
+        timeDisplay.textContent =
+            `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+    });
+
+    /* ─────────────────────────────
+       SEEK
+    ───────────────────────────── */
+    function showSeekOverlay(seconds) {
+
+        if (seconds < 0) {
+            seekArrows.innerHTML = "&#8249;&#8249;";
+            seekSeconds.textContent = "−10 segundos";
+        }
+        else {
+            seekArrows.innerHTML = "&#8250;&#8250;";
+            seekSeconds.textContent = "+10 segundos";
         }
 
-        function seekVideo(seconds) {
+        seekOverlay.classList.add("show");
 
-            if (!video.duration) return;
+        clearTimeout(seekOverlayTimer);
 
-            const target =
-                Math.min(
-                    Math.max(video.currentTime + seconds, 0),
-                    video.duration
-                );
+        seekOverlayTimer = setTimeout(() => {
+            seekOverlay.classList.remove("show");
+        }, 500);
+    }
 
-            video.currentTime = target;
+    function seekVideo(seconds) {
 
-            showSeekOverlay(seconds);
+        if (!video.duration) return;
+
+        const target =
+            Math.min(
+                Math.max(video.currentTime + seconds, 0),
+                video.duration
+            );
+
+        video.currentTime = target;
+
+        showSeekOverlay(seconds);
+    }
+
+    /* ─────────────────────────────
+       PLAY / PAUSE
+    ───────────────────────────── */
+    function showPlayPauseIcon(isPlaying) {
+
+        playpauseIcon.textContent =
+            isPlaying ? "⏸" : "▶";
+
+        playpauseIcon.classList.remove("show");
+
+        void playpauseIcon.offsetWidth;
+
+        playpauseIcon.classList.add("show");
+    }
+
+    function togglePlayPause() {
+
+        if (video.paused) {
+            video.play();
+            showPlayPauseIcon(true);
         }
-
-        /* ─────────────────────────────
-           PLAY / PAUSE
-        ───────────────────────────── */
-        function showPlayPauseIcon(isPlaying) {
-
-            playpauseIcon.textContent =
-                isPlaying ? "⏸" : "▶";
-
-            playpauseIcon.classList.remove("show");
-
-            void playpauseIcon.offsetWidth;
-
-            playpauseIcon.classList.add("show");
+        else {
+            video.pause();
+            showPlayPauseIcon(false);
         }
+    }
 
-        function togglePlayPause() {
+    /* ─────────────────────────────
+       LOADING
+    ───────────────────────────── */
+    video.addEventListener("waiting", () => {
+        loading.classList.add("show");
+    });
 
-            if (video.paused) {
-                video.play();
-                showPlayPauseIcon(true);
-            }
-            else {
-                video.pause();
-                showPlayPauseIcon(false);
-            }
-        }
+    video.addEventListener("playing", () => {
+        loading.classList.remove("show");
+    });
 
-        /* ─────────────────────────────
-           LOADING
-        ───────────────────────────── */
-        video.addEventListener("waiting", () => {
-            loading.classList.add("show");
-        });
+    /* ─────────────────────────────
+       BARRA CLICÁVEL + DRAG
+    ───────────────────────────── */
+    function updateSeekPosition(clientX) {
 
-        video.addEventListener("playing", () => {
-            loading.classList.remove("show");
-        });
+        const rect = progressContainer.getBoundingClientRect();
 
-        /* ─────────────────────────────
-           TECLADO / CONTROLE
-        ───────────────────────────── */
-        document.addEventListener("keydown", (e) => {
+        let percent =
+            (clientX - rect.left) / rect.width;
 
-            switch (e.key) {
+        percent = Math.max(0, Math.min(percent, 1));
 
-                /* ── Retrocede 10s ── */
-                case "ArrowLeft":
+        progressFill.style.width =
+            (percent * 100) + "%";
 
-                    e.preventDefault();
+        const newTime =
+            percent * video.duration;
 
-                    seekVideo(-10);
+        timeDisplay.textContent =
+            `${formatTime(newTime)} / ${formatTime(video.duration)}`;
 
-                    showControls();
+        progressTooltip.textContent =
+            formatTime(newTime);
 
-                    break;
+        progressTooltip.style.left =
+            (percent * rect.width) + "px";
 
-                /* ── Avança 10s ── */
-                case "ArrowRight":
+        video.currentTime = newTime;
+    }
 
-                    e.preventDefault();
+    progressContainer.addEventListener("mousedown", (e) => {
 
-                    seekVideo(10);
+        if (!video.duration) return;
 
-                    showControls();
+        isDragging = true;
 
-                    break;
-
-                /* ── Play / Pause ── */
-                case "Enter":
-                case " ":
-
-                    e.preventDefault();
-
-                    togglePlayPause();
-
-                    break;
-
-                /* ── Voltar ── */
-                case "Escape":
-                case "Backspace":
-
-                    e.preventDefault();
-
-                    history.back();
-
-                    break;
-
-                /* ── Mostrar controles ── */
-                case "ArrowUp":
-                case "ArrowDown":
-
-                    e.preventDefault();
-
-                    showControls();
-
-                    break;
-
-                /* ── Fullscreen ── */
-                case "f":
-                case "F":
-
-                    e.preventDefault();
-
-                    goFullscreen();
-
-                    break;
-            }
-        });
-
-        /* ─────────────────────────────
-           CLIQUE NO VÍDEO
-        ───────────────────────────── */
-        video.addEventListener("click", togglePlayPause);
-
-        /* ─────────────────────────────
-           INÍCIO
-        ───────────────────────────── */
         showControls();
 
+        updateSeekPosition(e.clientX);
     });
+
+    document.addEventListener("mousemove", (e) => {
+
+        const rect = progressContainer.getBoundingClientRect();
+
+        let percent =
+            (e.clientX - rect.left) / rect.width;
+
+        percent = Math.max(0, Math.min(percent, 1));
+
+        const hoverTime =
+            percent * video.duration;
+
+        progressTooltip.textContent =
+            formatTime(hoverTime);
+
+        progressTooltip.style.left =
+            (percent * rect.width) + "px";
+
+        progressTooltip.classList.add("show");
+
+        if (isDragging) {
+            updateSeekPosition(e.clientX);
+        }
+    });
+
+    document.addEventListener("mouseup", () => {
+        isDragging = false;
+    });
+
+    progressContainer.addEventListener("mouseleave", () => {
+
+        if (!isDragging) {
+            progressTooltip.classList.remove("show");
+        }
+    });
+
+    /* ─────────────────────────────
+       TECLADO
+    ───────────────────────────── */
+    document.addEventListener("keydown", (e) => {
+
+        switch (e.key) {
+
+            case "ArrowLeft":
+
+                e.preventDefault();
+
+                seekVideo(-10);
+
+                showControls();
+
+                break;
+
+            case "ArrowRight":
+
+                e.preventDefault();
+
+                seekVideo(10);
+
+                showControls();
+
+                break;
+
+            case "Enter":
+            case " ":
+
+                e.preventDefault();
+
+                togglePlayPause();
+
+                break;
+
+            case "Escape":
+            case "Backspace":
+
+                e.preventDefault();
+
+                history.back();
+
+                break;
+
+            case "ArrowUp":
+            case "ArrowDown":
+
+                e.preventDefault();
+
+                showControls();
+
+                break;
+
+            case "f":
+            case "F":
+
+                e.preventDefault();
+
+                goFullscreen();
+
+                break;
+        }
+    });
+
+    /* ─────────────────────────────
+       CLIQUE NO VÍDEO
+    ───────────────────────────── */
+    video.addEventListener("click", togglePlayPause);
+
+    /* ─────────────────────────────
+       START
+    ───────────────────────────── */
+    showControls();
+
+});
 </script>
 
 </body>
