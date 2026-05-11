@@ -21,6 +21,7 @@
         .container {
             width: 100vw;
             height: 100vh;
+
             position: relative;
 
             display: flex;
@@ -38,12 +39,13 @@
         }
 
         /* ─────────────────────────────
-           VOLTAR
+           BOTÃO VOLTAR
         ───────────────────────────── */
         .back {
             position: absolute;
             top: 20px;
             left: 20px;
+
             z-index: 10;
         }
 
@@ -81,7 +83,7 @@
         }
 
         /* ─────────────────────────────
-           BARRA
+           BARRA DE PROGRESSO
         ───────────────────────────── */
         .progress-container {
             width: 100%;
@@ -192,7 +194,11 @@
                 0:00 / 0:00
             </div>
 
-            <button class="fullscreen-btn" id="fullscreenBtn">
+            <button
+                class="fullscreen-btn"
+                id="fullscreenBtn"
+                title="Tela cheia"
+            >
                 ⛶
             </button>
 
@@ -205,16 +211,20 @@
 <script>
 window.addEventListener("load", () => {
 
-    const video = document.getElementById("video");
+    const video =
+        document.getElementById("video");
 
-    const controls = document.getElementById("controls");
+    const controls =
+        document.getElementById("controls");
 
-    const progress = document.getElementById("progress");
+    const progress =
+        document.getElementById("progress");
 
     const progressContainer =
         document.getElementById("progressContainer");
 
-    const time = document.getElementById("time");
+    const time =
+        document.getElementById("time");
 
     const fullscreenBtn =
         document.getElementById("fullscreenBtn");
@@ -244,13 +254,13 @@ window.addEventListener("load", () => {
             video.webkitRequestFullscreen();
         }
     }
-        setTimeout(() => {
 
-            try {
-                fullscreen();
-            } catch {}
+    fullscreenBtn.addEventListener(
+        "click",
+        fullscreen
+    );
 
-        }, 300);
+    fullscreen();
 
     /* ─────────────────────────────
        FORMATA TEMPO
@@ -259,12 +269,14 @@ window.addEventListener("load", () => {
 
         seconds = Math.floor(seconds);
 
-        const h = Math.floor(seconds / 3600);
+        const h =
+            Math.floor(seconds / 3600);
 
         const m =
             Math.floor((seconds % 3600) / 60);
 
-        const s = seconds % 60;
+        const s =
+            seconds % 60;
 
         if (h > 0) {
 
@@ -275,7 +287,7 @@ window.addEventListener("load", () => {
     }
 
     /* ─────────────────────────────
-       MOSTRA CONTROLES
+       CONTROLES
     ───────────────────────────── */
     function showControls() {
 
@@ -321,7 +333,7 @@ window.addEventListener("load", () => {
     );
 
     /* ─────────────────────────────
-       SEEK
+       SEEK 10s
     ───────────────────────────── */
     function showSeek(text) {
 
@@ -351,7 +363,9 @@ window.addEventListener("load", () => {
                 video.duration
             );
 
-        showSeek(seconds > 0 ? "+10s" : "-10s");
+        showSeek(
+            seconds > 0 ? "+10s" : "-10s"
+        );
     }
 
     /* ─────────────────────────────
@@ -375,19 +389,21 @@ window.addEventListener("load", () => {
     );
 
     /* ─────────────────────────────
-       PLAY/PAUSE
+       PLAY / PAUSE
     ───────────────────────────── */
+    function togglePlayPause() {
+
+        if (video.paused) {
+            video.play();
+        }
+        else {
+            video.pause();
+        }
+    }
+
     video.addEventListener(
         "click",
-        () => {
-
-            if (video.paused) {
-                video.play();
-            }
-            else {
-                video.pause();
-            }
-        }
+        togglePlayPause
     );
 
     /* ─────────────────────────────
@@ -424,12 +440,7 @@ window.addEventListener("load", () => {
 
                     e.preventDefault();
 
-                    if (video.paused) {
-                        video.play();
-                    }
-                    else {
-                        video.pause();
-                    }
+                    togglePlayPause();
 
                     break;
 
