@@ -14,9 +14,8 @@
 
         body {
             background: black;
-            color: white;
-            font-family: Arial, sans-serif;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         .container {
@@ -39,44 +38,56 @@
         }
 
         /* ─────────────────────────────
+           VOLTAR
+        ───────────────────────────── */
+        .back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .back a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        /* ─────────────────────────────
            CONTROLES
         ───────────────────────────── */
-        #controls {
+        .controls {
             position: absolute;
 
             left: 0;
             right: 0;
             bottom: 0;
 
-            padding: 0 25px 20px;
+            padding: 0 20px 18px;
 
             background: linear-gradient(
                 to top,
-                rgba(0,0,0,0.9),
-                rgba(0,0,0,0.4),
+                rgba(0,0,0,0.85),
                 transparent
             );
 
             opacity: 0;
 
             transition: opacity 0.2s ease;
-
-            pointer-events: none;
         }
 
-        #controls.visible {
+        .controls.show {
             opacity: 1;
-            pointer-events: auto;
         }
 
         /* ─────────────────────────────
-           BARRA DE PROGRESSO
+           BARRA
         ───────────────────────────── */
-        #progress-container {
+        .progress-container {
             width: 100%;
-            height: 6px;
+            height: 5px;
 
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.25);
 
             border-radius: 999px;
 
@@ -84,45 +95,31 @@
 
             cursor: pointer;
 
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
-        #progress-fill {
+        .progress {
             width: 0%;
             height: 100%;
 
             background: #e50914;
-
-            border-radius: 999px;
         }
 
         /* ─────────────────────────────
            LINHA INFERIOR
         ───────────────────────────── */
-        .controls-row {
+        .bottom-row {
             display: flex;
             align-items: center;
-            gap: 16px;
-        }
+            justify-content: space-between;
 
-        .time-display {
+            color: white;
+
             font-size: 14px;
-            color: rgba(255,255,255,0.9);
-            white-space: nowrap;
         }
 
-        .title-display {
-            flex: 1;
-
-            color: rgba(255,255,255,0.75);
-
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .icon-btn {
-            background: transparent;
+        .fullscreen-btn {
+            background: none;
             border: none;
 
             color: white;
@@ -130,48 +127,12 @@
             font-size: 20px;
 
             cursor: pointer;
-
-            opacity: 0.9;
-
-            transition: opacity 0.15s ease;
-        }
-
-        .icon-btn:hover {
-            opacity: 1;
-        }
-
-        /* ─────────────────────────────
-           BOTÃO VOLTAR
-        ───────────────────────────── */
-        #back-top {
-            position: absolute;
-
-            top: 20px;
-            left: 20px;
-
-            z-index: 10;
-
-            color: white;
-            text-decoration: none;
-
-            font-size: 18px;
-
-            opacity: 0;
-
-            transition: opacity 0.2s ease;
-
-            pointer-events: none;
-        }
-
-        #back-top.visible {
-            opacity: 1;
-            pointer-events: auto;
         }
 
         /* ─────────────────────────────
            OVERLAY SEEK
         ───────────────────────────── */
-        #seek-overlay {
+        .seek-overlay {
             position: absolute;
 
             top: 50%;
@@ -179,14 +140,14 @@
 
             transform: translate(-50%, -50%);
 
-            font-size: 26px;
-            font-weight: bold;
-
             color: white;
+
+            font-size: 28px;
+            font-weight: bold;
 
             background: rgba(0,0,0,0.45);
 
-            padding: 12px 18px;
+            padding: 10px 18px;
 
             border-radius: 10px;
 
@@ -197,88 +158,41 @@
             pointer-events: none;
         }
 
-        #seek-overlay.show {
+        .seek-overlay.show {
             opacity: 1;
-        }
-
-        /* ─────────────────────────────
-           PLAY/PAUSE ICON
-        ───────────────────────────── */
-        #playpause-icon {
-            position: absolute;
-
-            top: 50%;
-            left: 50%;
-
-            transform: translate(-50%, -50%);
-
-            font-size: 72px;
-
-            opacity: 0;
-
-            pointer-events: none;
-
-            transition: opacity 0.2s ease;
-        }
-
-        #playpause-icon.show {
-            opacity: 1;
-        }
-
-        /* ─────────────────────────────
-           MOBILE
-        ───────────────────────────── */
-        @media (max-width: 768px) {
-
-            .controls-row {
-                gap: 12px;
-            }
-
-            #playpause-icon {
-                font-size: 56px;
-            }
-
-            #seek-overlay {
-                font-size: 22px;
-            }
         }
     </style>
 </head>
 
 <body>
 
-<a id="back-top" href="javascript:history.back()">← Voltar</a>
-
 <div class="container">
+
+    <div class="back">
+        <a href="javascript:history.back()">← Voltar</a>
+    </div>
 
     <video id="video" autoplay>
         <source src="/video?path={{ path }}">
     </video>
 
-    <!-- Overlay de seek -->
-    <div id="seek-overlay">+10s</div>
+    <div class="seek-overlay" id="seekOverlay">
+        +10s
+    </div>
 
-    <!-- Ícone play/pause -->
-    <div id="playpause-icon">⏸</div>
+    <div class="controls" id="controls">
 
-    <!-- Controles -->
-    <div id="controls">
-
-        <div id="progress-container">
-            <div id="progress-fill"></div>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress" id="progress"></div>
         </div>
 
-        <div class="controls-row">
+        <div class="bottom-row">
 
-            <span class="time-display" id="time-display">
+            <div id="time">
                 0:00 / 0:00
-            </span>
+            </div>
 
-            <span class="title-display">
-                Reprodução
-            </span>
-
-            <button class="icon-btn" id="fullscreen-btn">
+            <button class="fullscreen-btn" id="fullscreenBtn">
                 ⛶
             </button>
 
@@ -291,106 +205,127 @@
 <script>
 window.addEventListener("load", () => {
 
-    const video             = document.getElementById("video");
+    const video = document.getElementById("video");
 
-    const controls          = document.getElementById("controls");
-    const backTop           = document.getElementById("back-top");
+    const controls = document.getElementById("controls");
 
-    const progressContainer = document.getElementById("progress-container");
-    const progressFill      = document.getElementById("progress-fill");
+    const progress = document.getElementById("progress");
 
-    const timeDisplay       = document.getElementById("time-display");
+    const progressContainer =
+        document.getElementById("progressContainer");
 
-    const fullscreenBtn     = document.getElementById("fullscreen-btn");
+    const time = document.getElementById("time");
 
-    const seekOverlay       = document.getElementById("seek-overlay");
+    const fullscreenBtn =
+        document.getElementById("fullscreenBtn");
 
-    const playpauseIcon     = document.getElementById("playpause-icon");
+    const seekOverlay =
+        document.getElementById("seekOverlay");
 
-    let hideControlsTimer;
+    let controlsTimer;
     let seekTimer;
 
     /* ─────────────────────────────
        FULLSCREEN
     ───────────────────────────── */
-    function goFullscreen() {
+    function fullscreen() {
 
         if (document.fullscreenElement) return;
 
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
         }
-        else if (document.documentElement.webkitRequestFullscreen) {
-            document.documentElement.webkitRequestFullscreen();
+        else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
         }
     }
 
     try {
-        goFullscreen();
+        fullscreen();
     }
     catch {
-        document.addEventListener("click", goFullscreen, { once: true });
+        document.addEventListener(
+            "click",
+            fullscreen,
+            { once: true }
+        );
     }
 
-    fullscreenBtn.addEventListener("click", goFullscreen);
+    fullscreenBtn.addEventListener(
+        "click",
+        fullscreen
+    );
 
     /* ─────────────────────────────
        FORMATA TEMPO
     ───────────────────────────── */
-    function formatTime(seconds) {
+    function format(seconds) {
 
         seconds = Math.floor(seconds);
 
         const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
+
+        const m =
+            Math.floor((seconds % 3600) / 60);
+
         const s = seconds % 60;
 
         if (h > 0) {
-            return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+            return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
         }
 
-        return `${m}:${String(s).padStart(2, "0")}`;
+        return `${m}:${String(s).padStart(2,"0")}`;
     }
 
     /* ─────────────────────────────
-       CONTROLES
+       MOSTRA CONTROLES
     ───────────────────────────── */
     function showControls() {
 
-        controls.classList.add("visible");
-        backTop.classList.add("visible");
+        controls.classList.add("show");
 
-        clearTimeout(hideControlsTimer);
+        clearTimeout(controlsTimer);
 
-        hideControlsTimer = setTimeout(() => {
+        controlsTimer = setTimeout(() => {
 
-            controls.classList.remove("visible");
-            backTop.classList.remove("visible");
+            controls.classList.remove("show");
 
-        }, 3000);
+        }, 2500);
     }
 
-    document.addEventListener("mousemove", showControls);
-    document.addEventListener("click", showControls);
+    document.addEventListener(
+        "mousemove",
+        showControls
+    );
+
+    document.addEventListener(
+        "click",
+        showControls
+    );
 
     /* ─────────────────────────────
        PROGRESSO
     ───────────────────────────── */
-    video.addEventListener("timeupdate", () => {
+    video.addEventListener(
+        "timeupdate",
+        () => {
 
-        if (!video.duration) return;
+            if (!video.duration) return;
 
-        const percent =
-            (video.currentTime / video.duration) * 100;
+            const percent =
+                (video.currentTime / video.duration) * 100;
 
-        progressFill.style.width = percent + "%";
+            progress.style.width =
+                percent + "%";
 
-        timeDisplay.textContent =
-            `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-    });
+            time.textContent =
+                `${format(video.currentTime)} / ${format(video.duration)}`;
+        }
+    );
 
     /* ─────────────────────────────
-       SEEK SIMPLES
+       SEEK
     ───────────────────────────── */
     function showSeek(text) {
 
@@ -401,8 +336,10 @@ window.addEventListener("load", () => {
         clearTimeout(seekTimer);
 
         seekTimer = setTimeout(() => {
+
             seekOverlay.classList.remove("show");
-        }, 450);
+
+        }, 350);
     }
 
     function seek(seconds) {
@@ -411,7 +348,10 @@ window.addEventListener("load", () => {
 
         video.currentTime =
             Math.min(
-                Math.max(video.currentTime + seconds, 0),
+                Math.max(
+                    video.currentTime + seconds,
+                    0
+                ),
                 video.duration
             );
 
@@ -421,121 +361,103 @@ window.addEventListener("load", () => {
     /* ─────────────────────────────
        BARRA CLICÁVEL
     ───────────────────────────── */
-    progressContainer.addEventListener("click", (e) => {
+    progressContainer.addEventListener(
+        "click",
+        (e) => {
 
-        if (!video.duration) return;
+            if (!video.duration) return;
 
-        const rect =
-            progressContainer.getBoundingClientRect();
+            const rect =
+                progressContainer.getBoundingClientRect();
 
-        const percent =
-            (e.clientX - rect.left) / rect.width;
+            const percent =
+                (e.clientX - rect.left) / rect.width;
 
-        video.currentTime =
-            percent * video.duration;
-    });
+            video.currentTime =
+                percent * video.duration;
+        }
+    );
 
     /* ─────────────────────────────
-       PLAY / PAUSE
+       PLAY/PAUSE
     ───────────────────────────── */
-    function showPlayPauseIcon(isPlaying) {
+    video.addEventListener(
+        "click",
+        () => {
 
-        playpauseIcon.textContent =
-            isPlaying ? "⏸" : "▶";
-
-        playpauseIcon.classList.add("show");
-
-        setTimeout(() => {
-            playpauseIcon.classList.remove("show");
-        }, 300);
-    }
-
-    function togglePlayPause() {
-
-        if (video.paused) {
-
-            video.play();
-
-            showPlayPauseIcon(true);
+            if (video.paused) {
+                video.play();
+            }
+            else {
+                video.pause();
+            }
         }
-        else {
-
-            video.pause();
-
-            showPlayPauseIcon(false);
-        }
-    }
-
-    video.addEventListener("click", togglePlayPause);
+    );
 
     /* ─────────────────────────────
        TECLADO
     ───────────────────────────── */
-    document.addEventListener("keydown", (e) => {
+    document.addEventListener(
+        "keydown",
+        (e) => {
 
-        switch (e.key) {
+            switch (e.key) {
 
-            case "ArrowLeft":
+                case "ArrowLeft":
 
-                e.preventDefault();
+                    e.preventDefault();
 
-                seek(-10);
+                    seek(-10);
 
-                showControls();
+                    showControls();
 
-                break;
+                    break;
 
-            case "ArrowRight":
+                case "ArrowRight":
 
-                e.preventDefault();
+                    e.preventDefault();
 
-                seek(10);
+                    seek(10);
 
-                showControls();
+                    showControls();
 
-                break;
+                    break;
 
-            case "Enter":
-            case " ":
+                case " ":
+                case "Enter":
 
-                e.preventDefault();
+                    e.preventDefault();
 
-                togglePlayPause();
+                    if (video.paused) {
+                        video.play();
+                    }
+                    else {
+                        video.pause();
+                    }
 
-                break;
+                    break;
 
-            case "Escape":
-            case "Backspace":
+                case "f":
+                case "F":
 
-                e.preventDefault();
+                    e.preventDefault();
 
-                history.back();
+                    fullscreen();
 
-                break;
+                    break;
 
-            case "ArrowUp":
-            case "ArrowDown":
+                case "Escape":
+                case "Backspace":
 
-                e.preventDefault();
+                    e.preventDefault();
 
-                showControls();
+                    history.back();
 
-                break;
-
-            case "f":
-            case "F":
-
-                e.preventDefault();
-
-                goFullscreen();
-
-                break;
+                    break;
+            }
         }
-    });
+    );
 
-    /* ─────────────────────────────
-       START
-    ───────────────────────────── */
     showControls();
 
 });
