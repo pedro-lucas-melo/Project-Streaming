@@ -21,7 +21,6 @@
         .container {
             width: 100vw;
             height: 100vh;
-
             position: relative;
 
             display: flex;
@@ -34,7 +33,6 @@
         video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
             background: black;
         }
 
@@ -46,7 +44,15 @@
             top: 20px;
             left: 20px;
 
-            z-index: 10;
+            z-index: 20;
+
+            opacity: 0;
+
+            transition: opacity 0.2s ease;
+        }
+
+        .back.show {
+            opacity: 1;
         }
 
         .back a {
@@ -56,85 +62,9 @@
         }
 
         /* ─────────────────────────────
-           CONTROLES
-        ───────────────────────────── */
-        .controls {
-            position: absolute;
-
-            left: 0;
-            right: 0;
-            bottom: 0;
-
-            padding: 0 20px 18px;
-
-            background: linear-gradient(
-                to top,
-                rgba(0,0,0,0.85),
-                transparent
-            );
-
-            opacity: 0;
-
-            transition: opacity 0.2s ease;
-        }
-
-        .controls.show {
-            opacity: 1;
-        }
-
-        /* ─────────────────────────────
-           BARRA DE PROGRESSO
-        ───────────────────────────── */
-        .progress-container {
-            width: 100%;
-            height: 5px;
-
-            background: rgba(255,255,255,0.25);
-
-            border-radius: 999px;
-
-            overflow: hidden;
-
-            cursor: pointer;
-
-            margin-bottom: 12px;
-        }
-
-        .progress {
-            width: 0%;
-            height: 100%;
-
-            background: #e50914;
-        }
-
-        /* ─────────────────────────────
-           LINHA INFERIOR
-        ───────────────────────────── */
-        .bottom-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            color: white;
-
-            font-size: 14px;
-        }
-
-        .fullscreen-btn {
-            background: none;
-            border: none;
-
-            color: white;
-
-            font-size: 20px;
-
-            cursor: pointer;
-        }
-
-        /* ─────────────────────────────
            OVERLAY SEEK
         ───────────────────────────── */
-        .seek-overlay {
+        .overlay {
             position: absolute;
 
             top: 50%;
@@ -142,16 +72,16 @@
 
             transform: translate(-50%, -50%);
 
+            background: rgba(0,0,0,0.45);
+
             color: white;
+
+            padding: 12px 18px;
+
+            border-radius: 10px;
 
             font-size: 28px;
             font-weight: bold;
-
-            background: rgba(0,0,0,0.45);
-
-            padding: 10px 18px;
-
-            border-radius: 10px;
 
             opacity: 0;
 
@@ -160,7 +90,7 @@
             pointer-events: none;
         }
 
-        .seek-overlay.show {
+        .overlay.show {
             opacity: 1;
         }
     </style>
@@ -170,40 +100,20 @@
 
 <div class="container">
 
-    <div class="back">
+    <div class="back" id="backButton">
         <a href="javascript:history.back()">← Voltar</a>
     </div>
 
-    <video id="video" autoplay>
+    <video
+        id="video"
+        controls
+        autoplay
+    >
         <source src="/video?path={{ path }}">
     </video>
 
-    <div class="seek-overlay" id="seekOverlay">
+    <div class="overlay" id="overlay">
         +10s
-    </div>
-
-    <div class="controls" id="controls">
-
-        <div class="progress-container" id="progressContainer">
-            <div class="progress" id="progress"></div>
-        </div>
-
-        <div class="bottom-row">
-
-            <div id="time">
-                0:00 / 0:00
-            </div>
-
-            <button
-                class="fullscreen-btn"
-                id="fullscreenBtn"
-                title="Tela cheia"
-            >
-                ⛶
-            </button>
-
-        </div>
-
     </div>
 
 </div>
@@ -214,26 +124,14 @@ window.addEventListener("load", () => {
     const video =
         document.getElementById("video");
 
-    const controls =
-        document.getElementById("controls");
+    const overlay =
+        document.getElementById("overlay");
 
-    const progress =
-        document.getElementById("progress");
+    const backButton =
+        document.getElementById("backButton");
 
-    const progressContainer =
-        document.getElementById("progressContainer");
-
-    const time =
-        document.getElementById("time");
-
-    const fullscreenBtn =
-        document.getElementById("fullscreenBtn");
-
-    const seekOverlay =
-        document.getElementById("seekOverlay");
-
+    let overlayTimer;
     let controlsTimer;
-    let seekTimer;
 
     /* ─────────────────────────────
        FULLSCREEN
@@ -255,101 +153,53 @@ window.addEventListener("load", () => {
         }
     }
 
-    fullscreenBtn.addEventListener(
-        "click",
-        fullscreen
-    );
-
-    fullscreen();
-
     /* ─────────────────────────────
-       FORMATA TEMPO
+       OVERLAY
     ───────────────────────────── */
-    function format(seconds) {
+    function showOverlay(text) {
 
-        seconds = Math.floor(seconds);
+        overlay.textContent = text;
 
-        const h =
-            Math.floor(seconds / 3600);
+        overlay.classList.add("show");
 
-        const m =
-            Math.floor((seconds % 3600) / 60);
+        clearTimeout(overlayTimer);
 
-        const s =
-            seconds % 60;
+        overlayTimer = setTimeout(() => {
 
-        if (h > 0) {
+            overlay.classList.remove("show");
 
-            return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-        }
-
-        return `${m}:${String(s).padStart(2,"0")}`;
+        }, 350);
     }
 
     /* ─────────────────────────────
-       CONTROLES
+       MOSTRA BOTÃO VOLTAR
     ───────────────────────────── */
-    function showControls() {
+    function showBackButton() {
 
-        controls.classList.add("show");
+        backButton.classList.add("show");
 
         clearTimeout(controlsTimer);
 
         controlsTimer = setTimeout(() => {
 
-            controls.classList.remove("show");
+            backButton.classList.remove("show");
 
         }, 2500);
     }
 
     document.addEventListener(
         "mousemove",
-        showControls
+        showBackButton
     );
 
     document.addEventListener(
         "click",
-        showControls
+        showBackButton
     );
 
     /* ─────────────────────────────
-       PROGRESSO
+       SEEK
     ───────────────────────────── */
-    video.addEventListener(
-        "timeupdate",
-        () => {
-
-            if (!video.duration) return;
-
-            const percent =
-                (video.currentTime / video.duration) * 100;
-
-            progress.style.width =
-                percent + "%";
-
-            time.textContent =
-                `${format(video.currentTime)} / ${format(video.duration)}`;
-        }
-    );
-
-    /* ─────────────────────────────
-       SEEK 10s
-    ───────────────────────────── */
-    function showSeek(text) {
-
-        seekOverlay.textContent = text;
-
-        seekOverlay.classList.add("show");
-
-        clearTimeout(seekTimer);
-
-        seekTimer = setTimeout(() => {
-
-            seekOverlay.classList.remove("show");
-
-        }, 350);
-    }
-
     function seek(seconds) {
 
         if (!video.duration) return;
@@ -363,51 +213,13 @@ window.addEventListener("load", () => {
                 video.duration
             );
 
-        showSeek(
+        showOverlay(
             seconds > 0 ? "+10s" : "-10s"
         );
     }
 
     /* ─────────────────────────────
-       BARRA CLICÁVEL
-    ───────────────────────────── */
-    progressContainer.addEventListener(
-        "click",
-        (e) => {
-
-            if (!video.duration) return;
-
-            const rect =
-                progressContainer.getBoundingClientRect();
-
-            const percent =
-                (e.clientX - rect.left) / rect.width;
-
-            video.currentTime =
-                percent * video.duration;
-        }
-    );
-
-    /* ─────────────────────────────
-       PLAY / PAUSE
-    ───────────────────────────── */
-    function togglePlayPause() {
-
-        if (video.paused) {
-            video.play();
-        }
-        else {
-            video.pause();
-        }
-    }
-
-    video.addEventListener(
-        "click",
-        togglePlayPause
-    );
-
-    /* ─────────────────────────────
-       TECLADO
+       TECLADO / CONTROLE REMOTO
     ───────────────────────────── */
     document.addEventListener(
         "keydown",
@@ -421,8 +233,6 @@ window.addEventListener("load", () => {
 
                     seek(-10);
 
-                    showControls();
-
                     break;
 
                 case "ArrowRight":
@@ -430,17 +240,6 @@ window.addEventListener("load", () => {
                     e.preventDefault();
 
                     seek(10);
-
-                    showControls();
-
-                    break;
-
-                case " ":
-                case "Enter":
-
-                    e.preventDefault();
-
-                    togglePlayPause();
 
                     break;
 
@@ -464,8 +263,6 @@ window.addEventListener("load", () => {
             }
         }
     );
-
-    showControls();
 
 });
 </script>
