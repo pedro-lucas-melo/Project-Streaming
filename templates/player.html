@@ -70,14 +70,7 @@
 
         /* Indicador de seek pendente na barra */
         #seek-indicator {
-            position: absolute;
-            top: -3px;
-            height: 10px;
-            width: 4px;
-            background: white;
-            border-radius: 2px;
             display: none;
-            transform: translateX(-50%);
         }
 
         .controls-row {
@@ -106,6 +99,40 @@
             color: rgba(255,255,255,0.85);
             cursor: pointer;
             text-decoration: none;
+        }
+
+        #fullscreen-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+            line-height: 1;
+            opacity: 0.85;
+            transition: opacity 0.2s;
+        }
+
+        #fullscreen-btn:hover {
+            opacity: 1;
+        }
+
+        #back-top {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            font-size: 18px;
+            color: white;
+            text-decoration: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        #back-top.visible {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         /* ── Overlay de seek estilo Netflix ── */
@@ -199,6 +226,8 @@
 </head>
 <body>
 
+<a id="back-top" href="javascript:history.back()">← Voltar</a>
+
 <div class="container">
     <video autoplay>
         <source src="/video?path={{ path }}">
@@ -224,7 +253,6 @@
             <div id="seek-indicator"></div>
         </div>
         <div class="controls-row">
-            <a class="back-btn" href="javascript:history.back()">← Voltar</a>
             <span class="time-display" id="time-display">0:00 / 0:00</span>
             <span class="title-display"></span>
         </div>
@@ -235,6 +263,7 @@
     window.addEventListener("load", function () {
         const video        = document.querySelector("video");
         const controls     = document.getElementById("controls");
+        const backTop      = document.getElementById("back-top");
         const progressFill = document.getElementById("progress-fill");
         const seekIndicator= document.getElementById("seek-indicator");
         const timeDisplay  = document.getElementById("time-display");
@@ -273,10 +302,12 @@
         let hideTimer;
         function showControls() {
             controls.classList.add("visible");
+            backTop.classList.add("visible");
             clearTimeout(hideTimer);
             hideTimer = setTimeout(() => {
                 if (!seekOverlay.classList.contains("active")) {
                     controls.classList.remove("visible");
+                    backTop.classList.remove("visible");
                 }
             }, 3500);
         }
@@ -339,6 +370,7 @@
             seekOverlay.classList.remove("active");
             seekIndicator.style.display = "none";
             controls.classList.remove("visible");
+            backTop.classList.remove("visible");
         }
 
         function cancelSeek() {
