@@ -230,7 +230,12 @@ window.addEventListener("load", () => {
     ───────────────────────────── */
     function fullscreen() {
 
-        if (document.fullscreenElement) return;
+        if (
+            document.fullscreenElement ||
+            document.webkitFullscreenElement
+        ) {
+            return;
+        }
 
         if (video.requestFullscreen) {
             video.requestFullscreen();
@@ -239,22 +244,13 @@ window.addEventListener("load", () => {
             video.webkitRequestFullscreen();
         }
     }
+        setTimeout(() => {
 
-    try {
-        fullscreen();
-    }
-    catch {
-        document.addEventListener(
-            "click",
-            fullscreen,
-            { once: true }
-        );
-    }
+            try {
+                fullscreen();
+            } catch {}
 
-    fullscreenBtn.addEventListener(
-        "click",
-        fullscreen
-    );
+        }, 300);
 
     /* ─────────────────────────────
        FORMATA TEMPO
