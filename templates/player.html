@@ -21,6 +21,7 @@
         .container {
             width: 100vw;
             height: 100vh;
+
             position: relative;
 
             display: flex;
@@ -62,7 +63,7 @@
         }
 
         /* ─────────────────────────────
-           OVERLAY SEEK
+           OVERLAY
         ───────────────────────────── */
         .overlay {
             position: absolute;
@@ -88,10 +89,59 @@
             transition: opacity 0.15s ease;
 
             pointer-events: none;
+
+            z-index: 30;
         }
 
         .overlay.show {
             opacity: 1;
+        }
+
+        /* ─────────────────────────────
+           BOTÕES SEEK
+        ───────────────────────────── */
+        .seek-buttons {
+            position: absolute;
+
+            bottom: 70px;
+            left: 50%;
+
+            transform: translateX(-50%);
+
+            display: flex;
+            gap: 12px;
+
+            z-index: 25;
+
+            opacity: 0;
+
+            transition: opacity 0.2s ease;
+        }
+
+        .seek-buttons.show {
+            opacity: 1;
+        }
+
+        .seek-btn {
+            background: rgba(0,0,0,0.65);
+
+            border: 1px solid rgba(255,255,255,0.2);
+
+            color: white;
+
+            padding: 10px 16px;
+
+            border-radius: 8px;
+
+            font-size: 16px;
+
+            cursor: pointer;
+        }
+
+        .seek-btn:hover,
+        .seek-btn:focus {
+            background: rgba(255,255,255,0.2);
+            outline: none;
         }
     </style>
 </head>
@@ -112,6 +162,26 @@
         <source src="/video?path={{ path }}">
     </video>
 
+    <!-- Botões de seek -->
+    <div class="seek-buttons" id="seekButtons">
+
+        <button
+            class="seek-btn"
+            id="backwardBtn"
+        >
+            ⏪ 10s
+        </button>
+
+        <button
+            class="seek-btn"
+            id="forwardBtn"
+        >
+            10s ⏩
+        </button>
+
+    </div>
+
+    <!-- Overlay -->
     <div class="overlay" id="overlay">
         +10s
     </div>
@@ -130,28 +200,17 @@ window.addEventListener("load", () => {
     const backButton =
         document.getElementById("backButton");
 
+    const seekButtons =
+        document.getElementById("seekButtons");
+
+    const backwardBtn =
+        document.getElementById("backwardBtn");
+
+    const forwardBtn =
+        document.getElementById("forwardBtn");
+
     let overlayTimer;
     let controlsTimer;
-
-    /* ─────────────────────────────
-       FULLSCREEN
-    ───────────────────────────── */
-    function fullscreen() {
-
-        if (
-            document.fullscreenElement ||
-            document.webkitFullscreenElement
-        ) {
-            return;
-        }
-
-        if (video.requestFullscreen) {
-            video.requestFullscreen();
-        }
-        else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen();
-        }
-    }
 
     /* ─────────────────────────────
        OVERLAY
@@ -172,29 +231,31 @@ window.addEventListener("load", () => {
     }
 
     /* ─────────────────────────────
-       MOSTRA BOTÃO VOLTAR
+       MOSTRA CONTROLES
     ───────────────────────────── */
-    function showBackButton() {
+    function showControls() {
 
         backButton.classList.add("show");
+        seekButtons.classList.add("show");
 
         clearTimeout(controlsTimer);
 
         controlsTimer = setTimeout(() => {
 
             backButton.classList.remove("show");
+            seekButtons.classList.remove("show");
 
         }, 2500);
     }
 
     document.addEventListener(
         "mousemove",
-        showBackButton
+        showControls
     );
 
     document.addEventListener(
         "click",
-        showBackButton
+        showControls
     );
 
     /* ─────────────────────────────
@@ -218,30 +279,44 @@ window.addEventListener("load", () => {
         );
     }
 
+    backwardBtn.addEventListener(
+        "click",
+        () => seek(-10)
+    );
+
+    forwardBtn.addEventListener(
+        "click",
+        () => seek(10)
+    );
+
     /* ─────────────────────────────
-       TECLADO / CONTROLE REMOTO
+       FULLSCREEN
+    ───────────────────────────── */
+    function fullscreen() {
+
+        if (
+            document.fullscreenElement ||
+            document.webkitFullscreenElement
+        ) {
+            return;
+        }
+
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        }
+        else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+        }
+    }
+
+    /* ─────────────────────────────
+       TECLADO
     ───────────────────────────── */
     document.addEventListener(
         "keydown",
         (e) => {
 
             switch (e.key) {
-
-                case "ArrowLeft":
-
-                    e.preventDefault();
-
-                    seek(-10);
-
-                    break;
-
-                case "ArrowRight":
-
-                    e.preventDefault();
-
-                    seek(10);
-
-                    break;
 
                 case "f":
                 case "F":
