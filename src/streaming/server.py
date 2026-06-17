@@ -21,10 +21,9 @@ class StreamingServer:
         # CORREÇÃO: path absoluto evita quebrar quando o CWD não é streaming-server/.
         aiohttp_jinja2.setup(
             self.app,
-            loader=jinja2.FileSystemLoader(
-                str(BASE_DIR / "templates"),
-                autoescape=True,
-            )
+            loader=jinja2.FileSystemLoader(str(BASE_DIR / "templates")),
+            app_key=aiohttp_jinja2.APP_KEY,
+            autoescape=jinja2.select_autoescape(["html"]),
         )
 
     def _setup_routes(self):
