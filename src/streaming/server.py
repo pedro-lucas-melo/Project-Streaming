@@ -149,16 +149,18 @@ class StreamingServer:
 
             CHUNK = 256 * 1024  # 256 KB por vez
             remaining = length
-            with open(file_path, "rb") as f:
-                f.seek(start)
-                while remaining > 0:
-                    data = f.read(min(CHUNK, remaining))
-                    if not data:
-                        break
-                    await response.write(data)
-                    remaining -= len(data)
-
-            await response.write_eof()
+            try:
+                with open(file_path, "rb") as f:
+                    f.seek(start)
+                    while remaining > 0:
+                        data = f.read(min(CHUNK, remaining))
+                        if not data:
+                            break
+                        await response.write(data)
+                        remaining -= len(data)
+                await response.write_eof()
+            except ConnectionError:
+                pass  # cliente fechou conexão (seek, pause, tab fechada) — comportamento normal
             return response
 
         return web.FileResponse(path=file_path, headers={"Content-Type": content_type})
