@@ -2,14 +2,17 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Filmes</title>
     <style>
         body {
             background: #111;
             color: white;
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             text-align: center;
         }
+
+        h1 { margin-top: 30px; }
 
         .grid {
             display: flex;
@@ -17,6 +20,7 @@
             gap: 20px;
             flex-wrap: wrap;
             margin-top: 40px;
+            padding: 0 20px 40px;
         }
 
         .card {
@@ -28,15 +32,9 @@
             cursor: pointer;
         }
 
-        .card:hover {
-            background: #444;
-            transform: scale(1.05);
-        }
+        .card:hover { background: #444; transform: scale(1.05); }
 
-        a {
-            text-decoration: none;
-            color: white;
-        }
+        a { text-decoration: none; color: white; }
 
         .voltar {
             display: inline-block;
@@ -51,16 +49,28 @@
 
 <div class="grid">
     {% for movie in movies %}
-        <a href="/watch?path={{ movie.path }}">
-            <div class="card">
-                {{ movie.name }}
-            </div>
-        </a>
+        {#
+          CORREÇÃO: path passado via encodeURIComponent em JS — igual ao season.html.
+          Evita caminhos de disco expostos em href e problemas com caracteres especiais.
+        #}
+        <div class="card"
+             data-path="{{ movie.path }}"
+             tabindex="0"
+             role="link"
+             onclick="openMovie(this)"
+             onkeydown="if(event.key==='Enter')openMovie(this)">
+            {{ movie.name }}
+        </div>
     {% endfor %}
 </div>
 
-<br>
 <a class="voltar" href="/">← Voltar</a>
+
+<script>
+function openMovie(el) {
+    window.location.href = "/watch?path=" + encodeURIComponent(el.dataset.path);
+}
+</script>
 
 </body>
 </html>

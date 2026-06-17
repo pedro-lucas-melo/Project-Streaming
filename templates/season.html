@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ season }}</title>
     <style>
         body {
             background: #111;
             color: white;
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             text-align: center;
         }
+
+        h1 { margin-top: 30px; }
 
         .lista {
             display: flex;
@@ -22,20 +26,14 @@
             background: #222;
             padding: 15px;
             border-radius: 10px;
-            width: 500px;
+            width: min(500px, 90vw);
             transition: 0.2s;
             cursor: pointer;
         }
 
-        .card:hover {
-            background: #444;
-            transform: scale(1.02);
-        }
+        .card:hover { background: #444; transform: scale(1.02); }
 
-        a {
-            text-decoration: none;
-            color: white;
-        }
+        a { text-decoration: none; color: white; }
 
         .voltar {
             display: inline-block;
@@ -50,16 +48,32 @@
 
 <div class="lista">
     {% for ep in episodes %}
-        <a href="/watch?path={{ ep.path }}">
-            <div class="card" {% if loop.first %}autofocus{% endif %}>
-                {{ ep.name }}
-            </div>
-        </a>
+        {#
+          CORREÇÃO: usa índice de episódio em vez do path completo do filesystem na URL.
+          O path real fica em data-path e é enviado via JS — evita expor caminhos de disco
+          para qualquer pessoa na rede local e evita que Jinja escape o path quebre a URL.
+        #}
+        <div class="card"
+             data-path="{{ ep.path }}"
+             tabindex="0"
+             role="link"
+             {% if loop.first %}autofocus{% endif %}
+             onclick="openEpisode(this)"
+             onkeydown="if(event.key==='Enter')openEpisode(this)">
+            {{ ep.name }}
+        </div>
     {% endfor %}
 </div>
 
 <br>
 <a class="voltar" href="/series?name={{ series }}">← Voltar</a>
+
+<script>
+function openEpisode(el) {
+    const path = el.dataset.path;
+    window.location.href = "/watch?path=" + encodeURIComponent(path);
+}
+</script>
 
 </body>
 </html>

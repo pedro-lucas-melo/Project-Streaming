@@ -6,28 +6,31 @@ class MediaLibrary:
 
     def __init__(self, media_dir: str):
         self.media_dir = media_dir
+        self._structure_cache: dict | None = None
 
-    def list_videos(self):
+    def list_videos(self) -> list[dict]:
         videos = []
-
         for root, _, files in os.walk(self.media_dir):
             for file in files:
                 if file.lower().endswith(self.SUPPORTED_EXTENSIONS):
                     full_path = os.path.join(root, file)
                     relative_path = os.path.relpath(full_path, self.media_dir)
-
                     videos.append({
                         "name": file,
                         "path": full_path,
-                        "relative_path": relative_path
+                        "relative_path": relative_path,
                     })
-
         return videos
-    
-    def get_structure(self):
-        structure = {}
 
+    def get_structure(self, refresh: bool = False) -> dict:
+        # CORREÇÃO: cache evita re-scan do disco a cada requisição.
+        # Passe refresh=True para forçar re-leitura após adicionar arquivos.
+        if self._structure_cache is not None and not refresh:
+            return self._structure_cache
+
+        structure: dict = {}
         for root, dirs, files in os.walk(self.media_dir):
+            dirs.sort()
             relative_root = os.path.relpath(root, self.media_dir)
 
             if relative_root == ".":
@@ -46,19 +49,32 @@ class MediaLibrary:
                 for file in files:
                     if file.lower().endswith(self.SUPPORTED_EXTENSIONS):
                         full_path = os.path.join(root, file)
-
+                        # CORREÇÃO: remove extensão para qualquer formato suportado,
+                        # não apenas .mp4.
+                        name = file
+                        for ext in self.SUPPORTED_EXTENSIONS:
+                            if file.lower().endswith(ext):
+                                name = file[: -len(ext)]
+                                break
                         structure[series][season].append({
-                            "name": file[:-4] if file.endswith(".mp4") else file,
-                            "path": full_path
+                            "name": name,
+                            "path": full_path,
                         })
 
+        self._structure_cache = structure
         return structure
-    
-    def get_series_library(series_dir):
+
+    def invalidate_cache(self):
+        self._structure_cache = None
+
+    @staticmethod
+    def get_series_library(series_dir: str) -> "MediaLibrary":
         return MediaLibrary(series_dir)
 
-    def get_movies_library(movies_dir):
+    @staticmethod
+    def get_movies_library(movies_dir: str) -> "MediaLibrary":
         return MediaLibrary(movies_dir)
+
 
 if __name__ == "__main__":
     from streaming.config import ConfigManager
@@ -66,7 +82,5 @@ if __name__ == "__main__":
     config = ConfigManager()
     library = MediaLibrary(config.media_dir)
 
-    videos = library.list_videos()
-
-    for v in videos:
+    for v in library.list_videos():
         print(v)

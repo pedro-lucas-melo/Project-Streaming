@@ -6,11 +6,7 @@
     <title>Player</title>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             background: black;
@@ -21,13 +17,10 @@
         .container {
             width: 100vw;
             height: 100vh;
-
             position: relative;
-
             display: flex;
             align-items: center;
             justify-content: center;
-
             background: black;
         }
 
@@ -37,310 +30,359 @@
             background: black;
         }
 
-        /* ─────────────────────────────
-           BOTÃO VOLTAR
-        ───────────────────────────── */
+        /* ── BOTÃO VOLTAR ── */
         .back {
             position: absolute;
             top: 20px;
             left: 20px;
-
             z-index: 20;
-
             opacity: 0;
-
             transition: opacity 0.2s ease;
         }
 
-        .back.show {
-            opacity: 1;
-        }
+        .back.show { opacity: 1; }
 
         .back a {
             color: white;
             text-decoration: none;
             font-size: 18px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
         }
 
-        /* ─────────────────────────────
-           OVERLAY
-        ───────────────────────────── */
+        /* ── OVERLAY ── */
         .overlay {
             position: absolute;
-
             top: 50%;
             left: 50%;
-
             transform: translate(-50%, -50%);
-
-            background: rgba(0,0,0,0.45);
-
+            background: rgba(0,0,0,0.55);
             color: white;
-
-            padding: 12px 18px;
-
+            padding: 12px 22px;
             border-radius: 10px;
-
             font-size: 28px;
             font-weight: bold;
-
             opacity: 0;
-
             transition: opacity 0.15s ease;
-
             pointer-events: none;
-
             z-index: 30;
         }
 
-        .overlay.show {
-            opacity: 1;
-        }
+        .overlay.show { opacity: 1; }
 
-        /* ─────────────────────────────
-           BOTÕES SEEK
-        ───────────────────────────── */
-        .seek-buttons {
+        /* ── BARRA DE CONTROLES ── */
+        .controls {
             position: absolute;
-
-            bottom: 70px;
-            left: 50%;
-
-            transform: translateX(-50%);
-
-            display: flex;
-            gap: 12px;
-
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px 16px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
             z-index: 25;
-
             opacity: 0;
-
             transition: opacity 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .seek-buttons.show {
-            opacity: 1;
+        .controls.show { opacity: 1; }
+
+        /* ── BARRA DE PROGRESSO ── */
+        .progress-wrapper {
+            width: 100%;
+            height: 5px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
         }
 
-        .seek-btn {
-            background: rgba(0,0,0,0.65);
+        .progress-wrapper:hover { height: 8px; }
 
+        .progress-bar {
+            height: 100%;
+            background: #e50914;
+            border-radius: 3px;
+            width: 0%;
+            pointer-events: none;
+        }
+
+        /* ── BOTÕES ── */
+        .btn-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ctrl-btn {
+            background: rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.2);
-
             color: white;
-
-            padding: 10px 16px;
-
+            padding: 8px 14px;
             border-radius: 8px;
-
-            font-size: 16px;
-
+            font-size: 15px;
             cursor: pointer;
         }
 
-        .seek-btn:hover,
-        .seek-btn:focus {
+        .ctrl-btn:hover,
+        .ctrl-btn:focus {
             background: rgba(255,255,255,0.2);
             outline: none;
         }
+
+        .time-display {
+            color: rgba(255,255,255,0.85);
+            font-size: 13px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        /* ── SPINNER ── */
+        .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 15;
+            transition: opacity 0.2s;
+        }
+
+        .spinner.show { opacity: 1; }
+
+        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
     </style>
 </head>
 
 <body>
-
 <div class="container">
 
     <div class="back" id="backButton">
         <a href="javascript:history.back()">← Voltar</a>
     </div>
 
-    <video
-        id="video"
-        controls
-        autoplay
-    >
+    <video id="video" autoplay>
         <source src="/video?path={{ path }}">
     </video>
 
-    <!-- Botões de seek -->
-    <div class="seek-buttons" id="seekButtons">
+    <div class="spinner" id="spinner"></div>
+    <div class="overlay" id="overlay"></div>
 
-        <button
-            class="seek-btn"
-            id="backwardBtn"
-        >
-            ⏪ 10s
-        </button>
-
-        <button
-            class="seek-btn"
-            id="forwardBtn"
-        >
-            10s ⏩
-        </button>
-
-    </div>
-
-    <!-- Overlay -->
-    <div class="overlay" id="overlay">
-        +10s
+    <div class="controls" id="controls">
+        <div class="progress-wrapper" id="progressWrapper">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="btn-row">
+            <button class="ctrl-btn" id="playPauseBtn" title="Play/Pause [Espaço]">▶</button>
+            <button class="ctrl-btn" id="backwardBtn" title="Voltar 10s [←]">⏪ 10s</button>
+            <button class="ctrl-btn" id="forwardBtn"  title="Avançar 10s [→]">10s ⏩</button>
+            <button class="ctrl-btn" id="muteBtn"     title="Mudo [M]">🔊</button>
+            <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+            <button class="ctrl-btn" id="fullscreenBtn" title="Tela cheia [F]">⛶</button>
+        </div>
     </div>
 
 </div>
 
 <script>
-window.addEventListener("load", () => {
+(function () {
+    // ── STORAGE KEY para progresso ──────────────────────────────────────────
+    const STORAGE_KEY = "video_progress:" + encodeURIComponent(location.search);
 
-    const video =
-        document.getElementById("video");
-
-    const overlay =
-        document.getElementById("overlay");
-
-    const backButton =
-        document.getElementById("backButton");
-
-    const seekButtons =
-        document.getElementById("seekButtons");
-
-    const backwardBtn =
-        document.getElementById("backwardBtn");
-
-    const forwardBtn =
-        document.getElementById("forwardBtn");
+    const video          = document.getElementById("video");
+    const overlay        = document.getElementById("overlay");
+    const backButton     = document.getElementById("backButton");
+    const controls      = document.getElementById("controls");
+    const progressWrapper = document.getElementById("progressWrapper");
+    const progressBar    = document.getElementById("progressBar");
+    const playPauseBtn   = document.getElementById("playPauseBtn");
+    const backwardBtn    = document.getElementById("backwardBtn");
+    const forwardBtn     = document.getElementById("forwardBtn");
+    const muteBtn        = document.getElementById("muteBtn");
+    const fullscreenBtn  = document.getElementById("fullscreenBtn");
+    const timeDisplay    = document.getElementById("timeDisplay");
+    const spinner        = document.getElementById("spinner");
 
     let overlayTimer;
     let controlsTimer;
 
-    /* ─────────────────────────────
-       OVERLAY
-    ───────────────────────────── */
+    // ── OVERLAY ─────────────────────────────────────────────────────────────
     function showOverlay(text) {
-
         overlay.textContent = text;
-
         overlay.classList.add("show");
-
         clearTimeout(overlayTimer);
-
-        overlayTimer = setTimeout(() => {
-
-            overlay.classList.remove("show");
-
-        }, 350);
+        overlayTimer = setTimeout(() => overlay.classList.remove("show"), 500);
     }
 
-    /* ─────────────────────────────
-       MOSTRA CONTROLES
-    ───────────────────────────── */
+    // ── CONTROLES ───────────────────────────────────────────────────────────
     function showControls() {
-
         backButton.classList.add("show");
-        seekButtons.classList.add("show");
-
+        controls.classList.add("show");
         clearTimeout(controlsTimer);
-
         controlsTimer = setTimeout(() => {
-
-            backButton.classList.remove("show");
-            seekButtons.classList.remove("show");
-
-        }, 2500);
-    }
-
-    document.addEventListener(
-        "mousemove",
-        showControls
-    );
-
-    document.addEventListener(
-        "click",
-        showControls
-    );
-
-    /* ─────────────────────────────
-       SEEK
-    ───────────────────────────── */
-    function seek(seconds) {
-
-        if (!video.duration) return;
-
-        video.currentTime =
-            Math.min(
-                Math.max(
-                    video.currentTime + seconds,
-                    0
-                ),
-                video.duration
-            );
-
-        showOverlay(
-            seconds > 0 ? "+10s" : "-10s"
-        );
-    }
-
-    backwardBtn.addEventListener(
-        "click",
-        () => seek(-10)
-    );
-
-    forwardBtn.addEventListener(
-        "click",
-        () => seek(10)
-    );
-
-    /* ─────────────────────────────
-       FULLSCREEN
-    ───────────────────────────── */
-    function fullscreen() {
-
-        if (
-            document.fullscreenElement ||
-            document.webkitFullscreenElement
-        ) {
-            return;
-        }
-
-        if (video.requestFullscreen) {
-            video.requestFullscreen();
-        }
-        else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen();
-        }
-    }
-
-    /* ─────────────────────────────
-       TECLADO
-    ───────────────────────────── */
-    document.addEventListener(
-        "keydown",
-        (e) => {
-
-            switch (e.key) {
-
-                case "f":
-                case "F":
-
-                    e.preventDefault();
-
-                    fullscreen();
-
-                    break;
-
-                case "Escape":
-                case "Backspace":
-
-                    e.preventDefault();
-
-                    history.back();
-
-                    break;
+            if (!video.paused) {
+                backButton.classList.remove("show");
+                controls.classList.remove("show");
             }
+        }, 3000);
+    }
+
+    document.addEventListener("mousemove", showControls);
+    document.addEventListener("click", showControls);
+    document.addEventListener("touchstart", showControls, { passive: true });
+
+    // ── PLAY / PAUSE ────────────────────────────────────────────────────────
+    function togglePlay() {
+        if (video.paused) {
+            video.play();
+            showOverlay("▶");
+        } else {
+            video.pause();
+            showOverlay("⏸");
         }
-    );
+    }
 
-});
+    video.addEventListener("play",  () => { playPauseBtn.textContent = "⏸"; showControls(); });
+    video.addEventListener("pause", () => { playPauseBtn.textContent = "▶"; showControls(); });
+
+    playPauseBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePlay(); });
+
+    video.addEventListener("click", togglePlay);
+
+    // ── SEEK ────────────────────────────────────────────────────────────────
+    function seek(seconds) {
+        if (!video.duration) return;
+        video.currentTime = Math.max(0, Math.min(video.currentTime + seconds, video.duration));
+        showOverlay(seconds > 0 ? `+${seconds}s` : `${seconds}s`);
+    }
+
+    backwardBtn.addEventListener("click", (e) => { e.stopPropagation(); seek(-10); });
+    forwardBtn.addEventListener("click",  (e) => { e.stopPropagation(); seek(10); });
+
+    // ── PROGRESSO ───────────────────────────────────────────────────────────
+    video.addEventListener("timeupdate", () => {
+        if (!video.duration) return;
+        const pct = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = pct + "%";
+        timeDisplay.textContent = fmt(video.currentTime) + " / " + fmt(video.duration);
+        // Salva progresso a cada 5 segundos para não spammar localStorage
+        if (Math.floor(video.currentTime) % 5 === 0) {
+            localStorage.setItem(STORAGE_KEY, video.currentTime);
+        }
+    });
+
+    progressWrapper.addEventListener("click", (e) => {
+        if (!video.duration) return;
+        const rect = progressWrapper.getBoundingClientRect();
+        const pct  = (e.clientX - rect.left) / rect.width;
+        video.currentTime = pct * video.duration;
+        e.stopPropagation();
+    });
+
+    // ── RETOMAR PROGRESSO ───────────────────────────────────────────────────
+    video.addEventListener("loadedmetadata", () => {
+        const saved = parseFloat(localStorage.getItem(STORAGE_KEY));
+        // Só retoma se restarem mais de 30 segundos (evita "retomar nos créditos")
+        if (saved && saved > 5 && saved < video.duration - 30) {
+            video.currentTime = saved;
+            showOverlay("▶ Retomando…");
+        }
+    });
+
+    // Limpa progresso ao terminar o vídeo
+    video.addEventListener("ended", () => {
+        localStorage.removeItem(STORAGE_KEY);
+    });
+
+    // ── MUDO ────────────────────────────────────────────────────────────────
+    function toggleMute() {
+        video.muted = !video.muted;
+        muteBtn.textContent = video.muted ? "🔇" : "🔊";
+        showOverlay(video.muted ? "🔇" : "🔊");
+    }
+    muteBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleMute(); });
+
+    // ── FULLSCREEN ──────────────────────────────────────────────────────────
+    function toggleFullscreen() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else {
+            const el = document.documentElement;
+            (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+        }
+    }
+    fullscreenBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleFullscreen(); });
+
+    // ── SPINNER DE BUFFERING ─────────────────────────────────────────────────
+    video.addEventListener("waiting", () => spinner.classList.add("show"));
+    video.addEventListener("canplay", () => spinner.classList.remove("show"));
+    video.addEventListener("playing", () => spinner.classList.remove("show"));
+
+    // ── TECLADO ─────────────────────────────────────────────────────────────
+    document.addEventListener("keydown", (e) => {
+        // Ignora quando foco está em input
+        if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName)) return;
+
+        switch (e.key) {
+            case " ":
+            case "k":
+                e.preventDefault();
+                togglePlay();
+                break;
+            case "ArrowRight":
+                e.preventDefault();
+                seek(10);
+                break;
+            case "ArrowLeft":
+                e.preventDefault();
+                seek(-10);
+                break;
+            case "ArrowUp":
+                e.preventDefault();
+                video.volume = Math.min(1, video.volume + 0.1);
+                showOverlay("🔊 " + Math.round(video.volume * 100) + "%");
+                break;
+            case "ArrowDown":
+                e.preventDefault();
+                video.volume = Math.max(0, video.volume - 0.1);
+                showOverlay("🔉 " + Math.round(video.volume * 100) + "%");
+                break;
+            case "m":
+            case "M":
+                e.preventDefault();
+                toggleMute();
+                break;
+            case "f":
+            case "F":
+                e.preventDefault();
+                toggleFullscreen();
+                break;
+            case "Escape":
+            case "Backspace":
+                e.preventDefault();
+                history.back();
+                break;
+        }
+    });
+
+    // ── HELPERS ─────────────────────────────────────────────────────────────
+    function fmt(s) {
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = Math.floor(s % 60);
+        if (h > 0) return `${h}:${pad(m)}:${pad(sec)}`;
+        return `${m}:${pad(sec)}`;
+    }
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+})();
 </script>
-
 </body>
 </html>
