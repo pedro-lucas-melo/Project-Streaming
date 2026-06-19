@@ -14,6 +14,9 @@
             font-family: Arial, sans-serif;
         }
 
+        body.hide-cursor,
+        body.hide-cursor * { cursor: none !important; }
+
         .container {
             width: 100vw;
             height: 100vh;
@@ -95,6 +98,9 @@
             border-radius: 3px;
             cursor: pointer;
             position: relative;
+            /* área clicável maior sem alterar visual */
+            padding: 10px 0;
+            background-clip: content-box;
         }
 
         .progress-wrapper:hover { height: 8px; }
@@ -225,11 +231,13 @@
     function showControls() {
         backButton.classList.add("show");
         controls.classList.add("show");
+        document.body.classList.remove("hide-cursor");
         clearTimeout(controlsTimer);
         controlsTimer = setTimeout(() => {
             if (!video.paused) {
                 backButton.classList.remove("show");
                 controls.classList.remove("show");
+                document.body.classList.add("hide-cursor");
             }
         }, 3000);
     }

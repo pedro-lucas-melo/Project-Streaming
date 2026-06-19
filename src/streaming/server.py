@@ -166,7 +166,10 @@ class StreamingServer:
         return web.FileResponse(path=file_path, headers={"Content-Type": content_type})
 
     def run(self):
-        web.run_app(self.app, host=self.config.host, port=self.config.port)
+        try:
+            web.run_app(self.app, host=self.config.host, port=self.config.port)
+        except KeyboardInterrupt:
+            pass
 
 
 def main():
