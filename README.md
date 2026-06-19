@@ -1,155 +1,165 @@
 # 🎬 Project-Streaming
 
-Um servidor de streaming de vídeo leve e eficiente, construído com Python e aiohttp, capaz de servir mídia com suporte a streaming por chunks (HTTP Range Requests).
+Servidor de streaming de vídeo local, leve e assíncrono, construído com **Python** e **aiohttp**.
+Serve arquivos MP4/MKV com suporte completo a HTTP Range Requests — permitindo seek, pausa e retomada no player.
 
 ---
 
-## 📋 Índice
+## ✨ Funcionalidades
 
-- [Sobre o Projeto](#sobre-o-projeto)
-- [Tecnologias](#tecnologias)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação](#instalação)
-- [Configuração](#configuração)
-- [Como Usar](#como-usar)
-- [Testes](#testes)
-- [Contribuindo](#contribuindo)
+- ⚡ Streaming assíncrono com suporte a **Range Requests** (seek sem rebuffering)
+- 🎥 **Biblioteca de séries** com navegação por série → temporada → episódio
+- 🎞️ **Biblioteca de filmes** com rota dedicada
+- 🖥️ Interface web com templates **Jinja2** (dark mode)
+- ▶️ Player HTML5 com controles customizados (seek ±10s, teclas de atalho)
+- 🏠 Página inicial com navegação entre seções
 
 ---
 
-## Sobre o Projeto
+## 🛠 Tecnologias
 
-O **Project-Streaming** é um servidor web assíncrono focado em entrega eficiente de conteúdo de vídeo. Utilizando `aiohttp` e templates `Jinja2`, o projeto oferece uma interface web simples para navegar e assistir vídeos diretamente no navegador, com suporte a seek (avanço/retrocesso) via HTTP Range Requests.
-
-### ✨ Funcionalidades
-
-- ⚡ Streaming assíncrono de vídeo com suporte a Range Requests
-- 🎯 Controles de seek (avançar/retroceder) no player
-- 🎞️ Rota dedicada para biblioteca de filmes
-- 🖥️ Interface web com templates Jinja2
-- 📁 Gerenciamento de biblioteca de mídia local
-
----
-
-## Tecnologias
-
-| Tecnologia | Descrição |
-|---|---|
-| **Python 3.10+** | Linguagem principal |
-| **aiohttp** | Servidor web assíncrono |
-| **Jinja2** | Engine de templates HTML |
-| **pyproject.toml** | Gerenciamento de dependências |
+| Tecnologia | Versão | Função |
+|---|---|---|
+| Python | 3.12+ | Backend |
+| aiohttp | 3.9+ | Servidor web assíncrono |
+| aiohttp-jinja2 | 1.6+ | Templates |
+| Jinja2 | 3.1+ | Renderização HTML |
+| python-dotenv | 1.0+ | Configuração por `.env` |
+| ffmpeg | — | Conversão de mídia (script separado) |
 
 ---
 
-## Estrutura do Projeto
+## 📁 Estrutura
 
 ```
-Project-Streaming/
-├── scripts/          # Scripts auxiliares (renomear arquivos de mídia, etc.)
-├── src/
-│   └── streaming/    # Código-fonte principal (rotas, handlers, lógica de streaming)
-├── templates/        # Templates HTML (Jinja2) para a interface web
-├── tests/            # Testes automatizados
-├── .env.example      # Exemplo de variáveis de ambiente
-├── .gitignore
-├── pyproject.toml    # Configuração do projeto e dependências
-└── README.md
+streaming-server/
+├── src/streaming/
+│   ├── server.py        # Servidor principal, rotas
+│   ├── media.py         # Biblioteca de mídia (scan de diretórios)
+│   └── config.py        # Configurações via .env
+├── templates/
+│   ├── home.html        # Página inicial
+│   ├── index.html       # Lista de séries
+│   ├── series.html      # Temporadas de uma série
+│   ├── season.html      # Episódios de uma temporada
+│   ├── movies.html      # Lista de filmes
+│   └── player.html      # Player de vídeo
+├── scripts/
+│   └── convert.py       # Conversor ffmpeg interativo
+├── tests/
+│   └── test_media.py
+├── pyproject.toml
+└── .env.example
 ```
 
 ---
 
-## Pré-requisitos
+## 🚀 Instalação
 
-- Python **3.10** ou superior
-- `pip` ou gerenciador de pacotes compatível com `pyproject.toml` (ex: `uv`, `poetry`)
+### Pré-requisitos
+- Python 3.12 ou superior
+- [Poetry](https://python-poetry.org/docs/#installation)
 
----
-
-## Instalação
-
-1. **Clone o repositório:**
+### Passos
 
 ```bash
+# 1. Clone o repositório
 git clone https://github.com/pedro-lucas-melo/Project-Streaming.git
-cd Project-Streaming
-```
+cd Project-Streaming/streaming-server
 
-2. **Crie e ative um ambiente virtual:**
+# 2. Instale as dependências com Poetry
+poetry install
 
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-.venv\Scripts\activate     # Windows
-```
-
-3. **Instale as dependências:**
-
-```bash
-pip install -e .
+# 3. Configure o .env
+cp .env.example .env
+# Edite o .env com seus caminhos de mídia
 ```
 
 ---
 
-## Configuração
-
-1. Copie o arquivo de exemplo de variáveis de ambiente:
-
-```bash
-cp .env.example .env
-```
-
-2. Edite o `.env` com o caminho da sua biblioteca de mídia:
+## ⚙️ Configuração (`.env`)
 
 ```env
-MEDIA_DIR=/caminho/para/seus/videos
+# Diretório de séries (estrutura: Serie/Temporada/episodio.mp4)
+MEDIA_SERIES_DIR=C:\Users\SeuUsuario\Videos\series
+
+# Diretório de filmes (estrutura: filme.mp4)
+MEDIA_MOVIES_DIR=C:\Users\SeuUsuario\Videos\filmes
+
+# Host e porta (padrão: acessível em toda a rede local)
+HOST=0.0.0.0
+PORT=8080
+```
+
+### Estrutura de diretórios esperada
+
+```
+Videos/
+├── series/
+│   ├── Mr Robot/
+│   │   ├── Temporada 1/
+│   │   │   ├── ep01.mp4
+│   │   │   └── ep02.mp4
+│   │   └── Temporada 2/
+│   └── Breaking Bad/
+│       └── Temporada 1/
+└── filmes/
+    ├── Inception.mp4
+    └── Interestellar.mp4
 ```
 
 ---
 
-## Como Usar
-
-Inicie o servidor:
+## ▶️ Executar
 
 ```bash
-python -m src.streaming
+# Via Poetry (recomendado)
+poetry run streaming
+
+# Ou diretamente
+poetry run python -m streaming.server
 ```
 
-Acesse no navegador:
+Acesse em: **http://localhost:8080**
 
-```
-http://localhost:8080
-```
-
-Navegue pela biblioteca de filmes em:
-
-```
-http://localhost:8080/movies
-```
+Na rede local (TV, celular): **http://[SEU-IP]:8080**
 
 ---
 
-## Testes
+## 🔄 Converter vídeos com ffmpeg
 
-Execute os testes com:
+O script `scripts/convert.py` converte MKV e outros formatos para MP4 com `+faststart`
+(necessário para streaming eficiente):
 
 ```bash
-python -m pytest tests/
+poetry run python scripts/convert.py
+```
+
+Menu interativo: escolha séries ou filmes, selecione quais converter.
+
+---
+
+## ⌨️ Atalhos do player
+
+| Tecla | Ação |
+|---|---|
+| `Espaço` / `K` | Play / Pause |
+| `←` | Retroceder 10s |
+| `→` | Avançar 10s |
+| `F` | Tela cheia |
+| `M` | Mudo |
+| `Backspace` / `Esc` | Voltar |
+
+---
+
+## 🧪 Testes
+
+```bash
+poetry run pytest tests/
 ```
 
 ---
 
-## Contribuindo
+## 📝 Licença
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir uma *issue* ou enviar um *pull request*.
-
-1. Faça um fork do projeto
-2. Crie sua branch: `git checkout -b feat/minha-feature`
-3. Commit suas mudanças: `git commit -m 'feat: minha nova feature'`
-4. Push para a branch: `git push origin feat/minha-feature`
-5. Abra um Pull Request
-
----
-
-<p align="center">Feito com ☕ e Python</p>
+MIT — veja [LICENSE](LICENSE)
