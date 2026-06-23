@@ -11,4 +11,7 @@
     <icon src="icon.png"/>
     <name>Streaming</name>
     <tizen:profile name="tv"/>
+    <access origin="*" subdomains="true"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/network.get"/>
 </widget>
