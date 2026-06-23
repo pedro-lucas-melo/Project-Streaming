@@ -1,8 +1,13 @@
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
-from streaming.database import init_db, get_all_profiles, get_profile, upsert_progress, get_progress, get_in_progress, delete_progress
-from streaming.tmdb import fetch_metadata
+from streaming.database import (
+    init_db, get_all_profiles, get_profile,
+    upsert_progress, get_progress, get_in_progress, delete_progress,
+    upsert_rating, get_rating,
+    add_to_watchlist, remove_from_watchlist, get_watchlist, get_watchlist_keys,
+)
+from streaming.tmdb import fetch_metadata, search_suggestions
 import jinja2
 import aiohttp_jinja2
 import os
@@ -43,6 +48,13 @@ class StreamingServer:
         self.app.router.add_post("/api/progress", self.handle_progress_save)
         self.app.router.add_get("/api/progress", self.handle_progress_get)
         self.app.router.add_delete("/api/progress", self.handle_progress_delete)
+        self.app.router.add_get("/api/tmdb-search", self.handle_tmdb_search)
+        self.app.router.add_get("/api/rating", self.handle_rating_get)
+        self.app.router.add_post("/api/rating", self.handle_rating_post)
+        self.app.router.add_get("/api/watchlist", self.handle_watchlist_get)
+        self.app.router.add_post("/api/watchlist", self.handle_watchlist_post)
+        self.app.router.add_delete("/api/watchlist", self.handle_watchlist_delete)
+        self.app.router.add_static("/static", BASE_DIR / "static")
         self.app.on_startup.append(self._on_startup)
 
     async def _on_startup(self, app):
@@ -129,24 +141,29 @@ class StreamingServer:
                     "encoded_path": encoded_path,
                     "file_path": fp,
                 })
-        return {"profile": profile, "in_progress": enriched}
+        watchlist = await get_watchlist(profile_id)
+        return {"profile": profile, "in_progress": enriched, "watchlist": watchlist}
 
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
         if not self.series_library:
             raise web.HTTPNotFound(reason="Diretório de séries não configurado")
+        profile_id = self._require_profile(request)
+        wl_keys = await get_watchlist_keys(profile_id) if profile_id else set()
         structure = self.series_library.get_structure()
         series_names = sorted(structure.keys())
         series = []
         for name in series_names:
             meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
-            series.append({"name": name, "poster_url": meta.get("poster_url")})
+            series.append({"name": name, "poster_url": meta.get("poster_url"), "in_watchlist": name in wl_keys})
         return {"series": series}
 
     @aiohttp_jinja2.template("movies.html")
     async def handle_movies(self, request):
         if not self.movies_library:
             raise web.HTTPNotFound(reason="Diretório de filmes não configurado")
+        profile_id = self._require_profile(request)
+        wl_keys = await get_watchlist_keys(profile_id) if profile_id else set()
         videos = self.movies_library.list_videos()
         movies_raw = sorted(
             [
@@ -161,7 +178,7 @@ class StreamingServer:
         movies = []
         for m in movies_raw:
             meta = await fetch_metadata(self.config.tmdb_token, m["name"], "movie")
-            movies.append({**m, "poster_url": meta.get("poster_url")})
+            movies.append({**m, "poster_url": meta.get("poster_url"), "in_watchlist": m["name"] in wl_keys})
         return {"movies": movies}
 
     @aiohttp_jinja2.template("series.html")
@@ -195,7 +212,19 @@ class StreamingServer:
         path = request.query.get("path")
         if not path:
             raise web.HTTPBadRequest(reason="Caminho não especificado")
-        return {"path": path, "encoded_path": quote(path)}
+        profile_id = self._require_profile(request)
+        series_base = os.path.abspath(self.config.media_series_dir).lower() if self.config.media_series_dir else ""
+        abs_path = os.path.abspath(path).lower()
+        if series_base and abs_path.startswith(series_base):
+            parts = pathlib.Path(path).parts
+            series_idx = next((i for i, p in enumerate(parts) if p.lower() == pathlib.Path(self.config.media_series_dir).name.lower()), None)
+            media_key = parts[series_idx + 1] if series_idx is not None and len(parts) > series_idx + 1 else pathlib.Path(path).stem
+            media_type = "tv"
+        else:
+            media_key = pathlib.Path(path).stem
+            media_type = "movie"
+        current_rating = await get_rating(profile_id, media_key) if profile_id else None
+        return {"path": path, "encoded_path": quote(path), "media_key": media_key, "media_type": media_type, "current_rating": current_rating or ""}
 
     async def handle_video(self, request):
         file_path = request.query.get("path")
@@ -265,6 +294,72 @@ class StreamingServer:
             return response
 
         return web.FileResponse(path=file_path, headers={"Content-Type": content_type})
+
+    async def handle_tmdb_search(self, request: web.Request):
+        q = request.query.get("q", "").strip()
+        if not q:
+            return web.json_response([])
+        if not self.config.tmdb_token:
+            return web.json_response([])
+        results = await search_suggestions(self.config.tmdb_token, q)
+        return web.json_response(results)
+
+    async def handle_rating_get(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.json_response({"rating": None})
+        media_key = request.query.get("media_key", "")
+        rating = await get_rating(profile_id, media_key)
+        return web.json_response({"rating": rating})
+
+    async def handle_rating_post(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.Response(status=401)
+        try:
+            data = await request.json()
+            media_key = data["media_key"]
+            rating = data["rating"]
+            if rating not in ("love", "like", "dislike"):
+                raise ValueError
+        except (KeyError, ValueError, TypeError):
+            return web.Response(status=400)
+        await upsert_rating(profile_id, media_key, rating)
+        return web.Response(status=204)
+
+    async def handle_watchlist_get(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.json_response({"in_watchlist": False})
+        media_key = request.query.get("media_key", "")
+        keys = await get_watchlist_keys(profile_id)
+        return web.json_response({"in_watchlist": media_key in keys})
+
+    async def handle_watchlist_post(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.Response(status=401)
+        try:
+            data = await request.json()
+            media_key = data["media_key"]
+            title = data["title"]
+            poster_url = data.get("poster_url")
+            media_type = data["media_type"]
+            link_url = data["link_url"]
+        except (KeyError, TypeError):
+            return web.Response(status=400)
+        await add_to_watchlist(profile_id, media_key, title, poster_url, media_type, link_url)
+        return web.Response(status=204)
+
+    async def handle_watchlist_delete(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.Response(status=401)
+        media_key = request.query.get("media_key", "")
+        if not media_key:
+            return web.Response(status=400)
+        await remove_from_watchlist(profile_id, media_key)
+        return web.Response(status=204)
 
     async def handle_progress_delete(self, request: web.Request):
         profile_id = self._require_profile(request)
