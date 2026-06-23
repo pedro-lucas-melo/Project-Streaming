@@ -85,7 +85,6 @@
             transition: opacity 0.2s ease;
             display: flex;
             flex-direction: column;
-            gap: 10px;
         }
 
         .controls.show { opacity: 1; }
@@ -123,8 +122,10 @@
         .btn-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            margin-top: 10px;
         }
+
+        .ctrl-btn + .ctrl-btn { margin-left: 10px; }
 
         .ctrl-btn {
             background: rgba(0,0,0,0.5);
@@ -218,7 +219,7 @@
         <a href="javascript:history.back()">← Voltar</a>
     </div>
 
-    <video id="video" autoplay>
+    <video id="video" autoplay data-resume="{{ resume_position }}">
         <source src="/video?path={{ encoded_path }}">
     </video>
 
@@ -355,22 +356,19 @@
     });
 
     // ── RETOMAR PROGRESSO ───────────────────────────────────────────────────
-    let _resumePosition = 0;
+    // Posição renderizada pelo servidor — sem async fetch, sem race condition na TV.
+    var _resumePosition = parseFloat(video.dataset.resume || "0");
 
-    video.addEventListener("loadedmetadata", async () => {
-        const res = await fetch("/api/progress?path=" + encodeURIComponent(FILE_PATH));
-        const { position } = await res.json();
-        if (position && position > 5 && position < video.duration - 30) {
-            _resumePosition = position;
-            video.currentTime = position;
+    video.addEventListener("loadedmetadata", function() {
+        if (_resumePosition > 5 && _resumePosition < video.duration - 30) {
+            video.currentTime = _resumePosition;
             showOverlay("▶ Retomando…");
         }
     });
 
     // TV/dispositivos lentos: seek pode ser ignorado antes de buffering suficiente.
-    // Reaplica a posição no canplay se ainda estiver longe do alvo.
-    video.addEventListener("canplay", () => {
-        if (_resumePosition > 0 && Math.abs(video.currentTime - _resumePosition) > 3) {
+    video.addEventListener("canplay", function() {
+        if (_resumePosition > 5 && Math.abs(video.currentTime - _resumePosition) > 3) {
             video.currentTime = _resumePosition;
         }
     });

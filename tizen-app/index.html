@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        p  { color: #aaa; font-size: 1rem; margin-bottom: 2.5rem; }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        label { font-size: 1rem; color: #ccc; margin-right: 12px; white-space: nowrap; }
+        input {
+            background: #222;
+            border: 2px solid #555;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            width: 320px;
+            outline: none;
+        }
+        input:focus { border-color: #e50914; }
+        .btn {
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .btn:hover, .btn:focus { background: #c0070f; outline: none; }
+        .hint { color: #555; font-size: 0.85rem; margin-top: 1.5rem; }
+    </style>
+</head>
+<body>
+<h1>🍿 Streaming</h1>
+<p>Digite o endereço do servidor na sua rede local</p>
+
+<div class="form-row">
+    <label for="serverInput">Endereço:</label>
+    <input id="serverInput" type="text" placeholder="192.168.1.100:80" autocomplete="off" spellcheck="false">
+</div>
+
+<button class="btn" id="connectBtn" onclick="connect()">Conectar</button>
+
+<p class="hint">Exemplo: 192.168.1.100 ou 192.168.1.100:80</p>
+
+<script>
+var KEY_BACK  = 10009;
+var KEY_ENTER = 13;
+
+var input = document.getElementById("serverInput");
+var btn   = document.getElementById("connectBtn");
+
+// Carrega endereço salvo
+var saved = localStorage.getItem("streaming_server");
+if (saved) {
+    input.value = saved;
+    // Auto-conecta se já tem endereço salvo
+    setTimeout(function() { connect(); }, 800);
+} else {
+    input.focus();
+}
+
+function connect() {
+    var val = input.value.trim();
+    if (!val) { input.focus(); return; }
+    // Adiciona http:// se não tiver protocolo
+    if (val.indexOf("://") === -1) { val = "http://" + val; }
+    localStorage.setItem("streaming_server", input.value.trim());
+    window.location.href = val;
+}
+
+document.addEventListener("keydown", function(e) {
+    var code = e.keyCode || e.which;
+    if (code === KEY_ENTER) {
+        if (document.activeElement === btn || document.activeElement === document.body) {
+            connect();
+        }
+    }
+    if (code === KEY_BACK) {
+        // Se já conectou antes, volta; senão não faz nada
+        if (localStorage.getItem("streaming_server")) {
+            localStorage.removeItem("streaming_server");
+            input.value = "";
+            input.focus();
+        }
+    }
+});
+
+input.addEventListener("keydown", function(e) {
+    if (e.keyCode === KEY_ENTER || e.which === KEY_ENTER) { connect(); }
+});
+</script>
+</body>
+</html>

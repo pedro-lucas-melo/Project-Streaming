@@ -226,7 +226,16 @@ class StreamingServer:
             media_key = pathlib.Path(path).stem
             media_type = "movie"
         current_rating = await get_rating(profile_id, media_key) if profile_id else None
-        return {"path": path, "encoded_path": quote(path), "media_key": media_key, "media_type": media_type, "current_rating": current_rating or ""}
+        progress = await get_progress(profile_id, path) if profile_id else None
+        resume_position = progress["position"] if progress and progress.get("position") else 0
+        return {
+            "path": path,
+            "encoded_path": quote(path),
+            "media_key": media_key,
+            "media_type": media_type,
+            "current_rating": current_rating or "",
+            "resume_position": resume_position,
+        }
 
     async def handle_video(self, request):
         file_path = request.query.get("path")
