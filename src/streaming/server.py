@@ -1,6 +1,7 @@
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
+from streaming.database import init_db, get_all_profiles, get_profile
 import jinja2
 import aiohttp_jinja2
 import os
@@ -28,6 +29,9 @@ class StreamingServer:
         )
 
     def _setup_routes(self):
+        self.app.router.add_get("/profiles", self.handle_profiles)
+        self.app.router.add_post("/profiles/select", self.handle_profile_select)
+        self.app.router.add_get("/profiles/exit", self.handle_profile_exit)
         self.app.router.add_get("/", self.handle_home)
         self.app.router.add_get("/series-list", self.handle_index)
         self.app.router.add_get("/video", self.handle_video)
@@ -35,10 +39,50 @@ class StreamingServer:
         self.app.router.add_get("/series", self.handle_series)
         self.app.router.add_get("/season", self.handle_season)
         self.app.router.add_get("/movies", self.handle_movies)
+        self.app.on_startup.append(self._on_startup)
+
+    async def _on_startup(self, app):
+        await init_db()
+
+    def _require_profile(self, request: web.Request) -> int | None:
+        """Retorna profile_id do cookie ou None."""
+        try:
+            return int(request.cookies.get("profile_id", ""))
+        except (ValueError, TypeError):
+            return None
+
+    @aiohttp_jinja2.template("profiles.html")
+    async def handle_profiles(self, request):
+        profiles = await get_all_profiles()
+        return {"profiles": profiles}
+
+    async def handle_profile_select(self, request: web.Request):
+        data = await request.post()
+        try:
+            profile_id = int(data["profile_id"])
+        except (KeyError, ValueError):
+            raise web.HTTPBadRequest(reason="profile_id inválido")
+        profile = await get_profile(profile_id)
+        if not profile:
+            raise web.HTTPNotFound(reason="Perfil não encontrado")
+        response = web.HTTPFound("/")
+        response.set_cookie("profile_id", str(profile_id), max_age=60 * 60 * 24 * 365)
+        raise response
+
+    async def handle_profile_exit(self, request: web.Request):
+        response = web.HTTPFound("/profiles")
+        response.del_cookie("profile_id")
+        raise response
 
     @aiohttp_jinja2.template("home.html")
     async def handle_home(self, request):
-        return {}
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            raise web.HTTPFound("/profiles")
+        profile = await get_profile(profile_id)
+        if not profile:
+            raise web.HTTPFound("/profiles")
+        return {"profile": profile}
 
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
