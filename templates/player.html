@@ -199,8 +199,7 @@
 
 <script>
 (function () {
-    // ── STORAGE KEY para progresso ──────────────────────────────────────────
-    const STORAGE_KEY = "video_progress:" + encodeURIComponent(location.search);
+    const FILE_PATH = new URLSearchParams(location.search).get("path");
 
     const video          = document.getElementById("video");
     const overlay        = document.getElementById("overlay");
@@ -280,9 +279,12 @@
         const pct = (video.currentTime / video.duration) * 100;
         progressBar.style.width = pct + "%";
         timeDisplay.textContent = fmt(video.currentTime) + " / " + fmt(video.duration);
-        // Salva progresso a cada 5 segundos para não spammar localStorage
         if (Math.floor(video.currentTime) % 5 === 0) {
-            localStorage.setItem(STORAGE_KEY, video.currentTime);
+            fetch("/api/progress", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ path: FILE_PATH, position: video.currentTime, duration: video.duration }),
+            });
         }
     });
 
@@ -295,18 +297,22 @@
     });
 
     // ── RETOMAR PROGRESSO ───────────────────────────────────────────────────
-    video.addEventListener("loadedmetadata", () => {
-        const saved = parseFloat(localStorage.getItem(STORAGE_KEY));
-        // Só retoma se restarem mais de 30 segundos (evita "retomar nos créditos")
-        if (saved && saved > 5 && saved < video.duration - 30) {
-            video.currentTime = saved;
+    video.addEventListener("loadedmetadata", async () => {
+        const res = await fetch("/api/progress?path=" + encodeURIComponent(FILE_PATH));
+        const { position } = await res.json();
+        if (position && position > 5 && position < video.duration - 30) {
+            video.currentTime = position;
             showOverlay("▶ Retomando…");
         }
     });
 
-    // Limpa progresso ao terminar o vídeo
+    // Marca como concluído ao terminar (zera posição)
     video.addEventListener("ended", () => {
-        localStorage.removeItem(STORAGE_KEY);
+        fetch("/api/progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: FILE_PATH, position: 0, duration: video.duration }),
+        });
     });
 
     // ── MUDO ────────────────────────────────────────────────────────────────

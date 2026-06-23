@@ -1,7 +1,7 @@
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
-from streaming.database import init_db, get_all_profiles, get_profile
+from streaming.database import init_db, get_all_profiles, get_profile, upsert_progress, get_progress
 import jinja2
 import aiohttp_jinja2
 import os
@@ -39,6 +39,8 @@ class StreamingServer:
         self.app.router.add_get("/series", self.handle_series)
         self.app.router.add_get("/season", self.handle_season)
         self.app.router.add_get("/movies", self.handle_movies)
+        self.app.router.add_post("/api/progress", self.handle_progress_save)
+        self.app.router.add_get("/api/progress", self.handle_progress_get)
         self.app.on_startup.append(self._on_startup)
 
     async def _on_startup(self, app):
@@ -209,6 +211,30 @@ class StreamingServer:
             return response
 
         return web.FileResponse(path=file_path, headers={"Content-Type": content_type})
+
+    async def handle_progress_save(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.Response(status=401)
+        try:
+            data = await request.json()
+            file_path = data["path"]
+            position = float(data["position"])
+            duration = float(data["duration"]) if data.get("duration") else None
+        except (KeyError, ValueError, TypeError):
+            return web.Response(status=400)
+        await upsert_progress(profile_id, file_path, position, duration)
+        return web.Response(status=204)
+
+    async def handle_progress_get(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.json_response({"position": 0, "duration": None})
+        file_path = request.query.get("path", "")
+        progress = await get_progress(profile_id, file_path)
+        if not progress:
+            return web.json_response({"position": 0, "duration": None})
+        return web.json_response(progress)
 
     def run(self):
         try:
