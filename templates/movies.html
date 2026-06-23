@@ -84,7 +84,7 @@
 
 <div class="grid">
     {% for movie in movies %}
-    <div class="card" onclick="openMovie('{{ movie.path }}')">
+    <div class="card" data-path="{{ movie.path }}" onclick="openMovie(this)">
         {% if movie.poster_url %}
         <img class="poster" src="{{ movie.poster_url }}" alt="{{ movie.name }}" loading="lazy">
         {% else %}
@@ -98,8 +98,8 @@
 <a class="voltar" href="/">← Voltar</a>
 
 <script>
-function openMovie(path) {
-    window.location.href = "/watch?path=" + encodeURIComponent(path);
+function openMovie(el) {
+    window.location.href = "/watch?path=" + encodeURIComponent(el.dataset.path);
 }
 </script>
 
