@@ -73,6 +73,25 @@ async def get_progress(profile_id: int, file_path: str) -> dict | None:
     return dict(row) if row else None
 
 
+async def get_in_progress(profile_id: int) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            """
+            SELECT file_path, position, duration
+            FROM watch_progress
+            WHERE profile_id = ?
+              AND position > 5
+              AND duration IS NOT NULL
+              AND (duration - position) > 30
+            ORDER BY updated_at DESC
+            """,
+            (profile_id,),
+        ) as cur:
+            rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
 async def get_profile(profile_id: int) -> dict | None:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row

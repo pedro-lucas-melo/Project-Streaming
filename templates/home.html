@@ -57,6 +57,66 @@
         .card .icon {
             font-size: 3rem;
         }
+
+        /* ── CONTINUAR ASSISTINDO ── */
+        .continue-section {
+            width: 100%;
+            max-width: 860px;
+            margin-bottom: 3rem;
+            text-align: left;
+        }
+
+        .continue-section h2 {
+            font-size: 1.1rem;
+            color: #aaa;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .continue-list {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .continue-card {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: white;
+            width: 260px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: background 0.15s, transform 0.15s;
+        }
+
+        .continue-card:hover {
+            background: #2e2e2e;
+            transform: scale(1.02);
+        }
+
+        .continue-card .title {
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #ddd;
+        }
+
+        .progress-track {
+            height: 3px;
+            background: #444;
+            border-radius: 2px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #e50914;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
@@ -67,6 +127,22 @@
     Olá, <strong style="color:white">{{ profile.name }}</strong> —
     <a href="/profiles/exit" style="color:#aaa; text-decoration:underline;">Trocar perfil</a>
 </p>
+
+{% if in_progress %}
+<div class="continue-section">
+    <h2>Continuar assistindo</h2>
+    <div class="continue-list">
+        {% for item in in_progress %}
+        <a class="continue-card" href="/watch?path={{ item.encoded_path }}">
+            <span class="title">{{ item.label }}</span>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: {{ item.pct }}%"></div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <div class="categories">
     <a class="card" href="/series-list">

@@ -1,7 +1,7 @@
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
-from streaming.database import init_db, get_all_profiles, get_profile, upsert_progress, get_progress
+from streaming.database import init_db, get_all_profiles, get_profile, upsert_progress, get_progress, get_in_progress
 import jinja2
 import aiohttp_jinja2
 import os
@@ -84,7 +84,12 @@ class StreamingServer:
         profile = await get_profile(profile_id)
         if not profile:
             raise web.HTTPFound("/profiles")
-        return {"profile": profile}
+        in_progress = await get_in_progress(profile_id)
+        for item in in_progress:
+            item["label"] = pathlib.Path(item["file_path"]).stem
+            item["pct"] = int((item["position"] / item["duration"]) * 100)
+            item["encoded_path"] = quote(item["file_path"])
+        return {"profile": profile, "in_progress": in_progress}
 
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
