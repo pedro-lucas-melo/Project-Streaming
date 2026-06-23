@@ -285,13 +285,31 @@ function selectSuggestion(i) {
     _selectedSuggestion = window._suggestItems[i];
     document.getElementById("suggestSendBtn").style.display = "";
 }
-function sendSuggestion() {
+async function sendSuggestion() {
     if (!_selectedSuggestion) return;
     const { title, tmdb_url, media_type, year } = _selectedSuggestion;
-    const tipo = media_type === "movie" ? "Filme" : "Série";
-    const msg = `Sugestão de ${tipo}: *${title}*${year ? " (" + year + ")" : ""}\n${tmdb_url}`;
-    window.open("https://wa.me/5554991339744?text=" + encodeURIComponent(msg), "_blank");
-    closeSuggestModal();
+    const sendBtn = document.getElementById("suggestSendBtn");
+    sendBtn.disabled = true;
+    sendBtn.textContent = "Enviando…";
+    try {
+        const res = await fetch("/api/suggest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, tmdb_url, media_type, year }),
+        });
+        if (res.ok) {
+            document.getElementById("suggestStatus").textContent = "✅ Sugestão enviada!";
+            setTimeout(closeSuggestModal, 1500);
+        } else {
+            document.getElementById("suggestStatus").textContent = "❌ Erro ao enviar. Tente novamente.";
+            sendBtn.disabled = false;
+            sendBtn.textContent = "Enviar pelo WhatsApp";
+        }
+    } catch {
+        document.getElementById("suggestStatus").textContent = "❌ Sem conexão com o servidor.";
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Enviar pelo WhatsApp";
+    }
 }
 </script>
 

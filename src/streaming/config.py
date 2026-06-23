@@ -16,6 +16,8 @@ class ConfigManager:
         self.host = os.getenv("HOST", "0.0.0.0")
         self.port = int(os.getenv("PORT", 8080))
         self.tmdb_token = os.getenv("TMDB_API_READ_TOKEN", "")
+        self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+        self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
 
         self._validate()
 

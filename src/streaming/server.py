@@ -49,8 +49,10 @@ class StreamingServer:
         self.app.router.add_get("/api/progress", self.handle_progress_get)
         self.app.router.add_delete("/api/progress", self.handle_progress_delete)
         self.app.router.add_get("/api/tmdb-search", self.handle_tmdb_search)
-        self.app.router.add_get("/api/rating", self.handle_rating_get)
-        self.app.router.add_post("/api/rating", self.handle_rating_post)
+        self.app.router.add_post("/api/suggest", self.handle_suggest)
+        # AVALIAÇÃO DESABILITADA — remover comentário para reativar
+        # self.app.router.add_get("/api/rating", self.handle_rating_get)
+        # self.app.router.add_post("/api/rating", self.handle_rating_post)
         self.app.router.add_get("/api/watchlist", self.handle_watchlist_get)
         self.app.router.add_post("/api/watchlist", self.handle_watchlist_post)
         self.app.router.add_delete("/api/watchlist", self.handle_watchlist_delete)
@@ -294,6 +296,40 @@ class StreamingServer:
             return response
 
         return web.FileResponse(path=file_path, headers={"Content-Type": content_type})
+
+    async def handle_suggest(self, request: web.Request):
+        try:
+            data = await request.json()
+            title = data["title"]
+            media_type = data.get("media_type", "")
+            year = data.get("year", "")
+            tmdb_url = data.get("tmdb_url", "")
+        except (KeyError, TypeError, ValueError):
+            return web.json_response({"error": "Dados inválidos"}, status=400)
+
+        cfg = self.config
+        if not cfg.telegram_bot_token or not cfg.telegram_chat_id:
+            return web.json_response({"error": "Telegram não configurado"}, status=503)
+
+        tipo = "Filme" if media_type == "movie" else "Série"
+        text = f"💡 *Sugestão de {tipo}*: {title}"
+        if year:
+            text += f" ({year})"
+        if tmdb_url:
+            text += f"\n{tmdb_url}"
+
+        import aiohttp as _aiohttp
+        telegram_url = f"https://api.telegram.org/bot{cfg.telegram_bot_token}/sendMessage"
+        async with _aiohttp.ClientSession() as session:
+            async with session.post(telegram_url, json={
+                "chat_id": cfg.telegram_chat_id,
+                "text": text,
+                "parse_mode": "Markdown",
+            }) as resp:
+                if resp.status == 200:
+                    return web.json_response({"ok": True})
+                text_err = await resp.text()
+                return web.json_response({"error": text_err}, status=502)
 
     async def handle_tmdb_search(self, request: web.Request):
         q = request.query.get("q", "").strip()

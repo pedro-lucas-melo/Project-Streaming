@@ -171,7 +171,7 @@
 
         @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
-        /* ── PAINEL DE AVALIAÇÃO ── */
+        /* ── PAINEL DE AVALIAÇÃO ── DESABILITADO (remover comentário para reativar)
         .rating-panel {
             position: absolute;
             bottom: 90px;
@@ -207,6 +207,7 @@
         .rating-btn.active { border-color: #e50914; background: rgba(229,9,20,0.25); }
         .rating-dismiss { font-size: 0.75rem; color: #666; cursor: pointer; }
         .rating-dismiss:hover { color: #aaa; }
+        ── FIM AVALIAÇÃO */
     </style>
 </head>
 
@@ -224,7 +225,7 @@
     <div class="spinner" id="spinner"></div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- Painel de avaliação -->
+    <!-- AVALIAÇÃO DESABILITADA — remover comentário para reativar
     <div class="rating-panel" id="ratingPanel">
         <p>O que achou?</p>
         <div class="rating-btns">
@@ -234,6 +235,7 @@
         </div>
         <span class="rating-dismiss" onclick="hideRatingPanel()">Fechar</span>
     </div>
+    FIM AVALIAÇÃO -->
 
     <div class="controls" id="controls">
         <div class="progress-wrapper" id="progressWrapper">
@@ -442,17 +444,15 @@
         }
     });
 
-    // ── AVALIAÇÃO ────────────────────────────────────────────────────────────
+    /* ── AVALIAÇÃO DESABILITADA — remover comentário para reativar ────────────
     const MEDIA_KEY = "{{ media_key | e }}";
 
     function showRatingPanel() {
         document.getElementById("ratingPanel").classList.add("show");
     }
 
-    // Mostrar após vídeo terminar
     video.addEventListener("ended", showRatingPanel);
 
-    // Mostrar após 5 min assistidos (se ainda não avaliou)
     let _ratingShown = {{ 'true' if current_rating else 'false' }};
     video.addEventListener("timeupdate", () => {
         if (!_ratingShown && video.currentTime > 300) {
@@ -460,6 +460,7 @@
             showRatingPanel();
         }
     });
+    ── FIM AVALIAÇÃO ─────────────────────────────────────────────────────── */
 
     // ── HELPERS ─────────────────────────────────────────────────────────────
     function fmt(s) {
@@ -473,6 +474,7 @@
 
 })();
 </script>
+<!-- AVALIAÇÃO DESABILITADA — remover comentário para reativar
 <script>
 function hideRatingPanel() {
     document.getElementById("ratingPanel").classList.remove("show");
@@ -489,5 +491,6 @@ async function rate(value) {
     setTimeout(hideRatingPanel, 800);
 }
 </script>
+FIM AVALIAÇÃO -->
 </body>
 </html>
