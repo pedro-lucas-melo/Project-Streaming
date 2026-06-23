@@ -11,11 +11,8 @@
 
     <content src="index.html"/>
 
-    <feature name="http://tizen.org/feature/screen.size.all"/>
-
     <icon src="icon.png"/>
     <name>Streaming</name>
-    <name xml:lang="pt">Streaming</name>
     <description>Player pessoal de streaming</description>
 
     <tizen:privilege name="http://tizen.org/privilege/internet"/>
@@ -27,6 +24,5 @@
                    context-menu="disable"
                    background-support="disable"
                    encryption="disable"
-                   install-location="auto"
                    hwkey-event="enable"/>
 </widget>
