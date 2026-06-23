@@ -10,7 +10,6 @@ _STATEMENTS = [
         name TEXT NOT NULL UNIQUE
     )
     """,
-    """,
     """
     CREATE TABLE IF NOT EXISTS media_metadata (
         media_key   TEXT PRIMARY KEY,
