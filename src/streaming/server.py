@@ -441,8 +441,18 @@ class StreamingServer:
         return web.json_response(progress)
 
     def run(self):
+        import asyncio, logging
+        # Suprime o WinError 10054 (cliente fecha conexão abruptamente — inofensivo no Windows)
+        def _silence_connection_reset(loop, context):
+            exc = context.get("exception")
+            if isinstance(exc, ConnectionResetError):
+                return
+            loop.default_exception_handler(context)
+
+        loop = asyncio.new_event_loop()
+        loop.set_exception_handler(_silence_connection_reset)
         try:
-            web.run_app(self.app, host=self.config.host, port=self.config.port)
+            web.run_app(self.app, host=self.config.host, port=self.config.port, loop=loop)
         except KeyboardInterrupt:
             pass
 

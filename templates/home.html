@@ -571,6 +571,16 @@ async function sendSuggestion() {
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.js");
 
+// Força reload quando o usuário volta pra home pelo botão Voltar do controle.
+// Necessário para mostrar itens recém-adicionados na watchlist.
+// pageshow+persisted é mais confiável que performance.navigation (depreciado) em TV browsers.
+window.addEventListener("pageshow", function(e) {
+    if (e.persisted) { window.location.reload(); }
+});
+if (window.performance && window.performance.navigation && window.performance.navigation.type === 2) {
+    window.location.reload();
+}
+
 // ── NAVEGAÇÃO TV (arrow keys nos cards de categoria) ─────────────────────────
 (function() {
     // Delega clique do card para o link interno (TV D-pad dispara click no elemento focado,

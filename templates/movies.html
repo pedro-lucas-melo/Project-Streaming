@@ -231,20 +231,25 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
 })();
 
 async function toggleWatchlist(btn) {
-    const inWl = btn.classList.contains("in-wl");
-    const key = btn.dataset.key;
+    var inWl = btn.classList.contains("in-wl");
+    var key = btn.dataset.key;
     if (inWl) {
-        await fetch("/api/watchlist?" + new URLSearchParams({ media_key: key }), { method: "DELETE" });
-        btn.classList.remove("in-wl");
-        btn.textContent = "＋ Assistir depois";
+        var r = await fetch("/api/watchlist?" + new URLSearchParams({ media_key: key }), { method: "DELETE" });
+        if (r.ok) { btn.classList.remove("in-wl"); btn.textContent = "＋ Assistir depois"; }
     } else {
-        await fetch("/api/watchlist", {
+        var poster = btn.dataset.poster;
+        if (poster === "None" || poster === "") poster = null;
+        var res = await fetch("/api/watchlist", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ media_key: key, title: btn.dataset.title, poster_url: btn.dataset.poster || null, media_type: btn.dataset.type, link_url: btn.dataset.link }),
+            body: JSON.stringify({ media_key: key, title: btn.dataset.title, poster_url: poster, media_type: btn.dataset.type, link_url: btn.dataset.link }),
         });
-        btn.classList.add("in-wl");
-        btn.textContent = "✅ Na lista";
+        if (res.ok) {
+            btn.classList.add("in-wl");
+            btn.textContent = "✅ Na lista";
+        } else {
+            btn.textContent = "⚠ Erro " + res.status;
+        }
     }
 }
 
