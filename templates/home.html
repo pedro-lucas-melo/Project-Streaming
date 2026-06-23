@@ -559,8 +559,22 @@ function closeSuggestModal() {
 document.getElementById("suggestModal").addEventListener("click", (e) => {
     if (e.target === e.currentTarget) closeSuggestModal();
 });
-document.getElementById("suggestInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") doSuggestSearch();
+document.getElementById("suggestInput").addEventListener("keydown", function(e) {
+    var kc = e.keyCode || e.which;
+    if (kc === 13 || e.key === "Enter") { doSuggestSearch(); return; }
+    // Right → Buscar button
+    if (kc === 39) {
+        e.preventDefault();
+        var b = document.querySelector(".suggest-search-btn"); if (b) b.focus();
+        return;
+    }
+    // Down → primeiro resultado (se houver) ou Buscar
+    if (kc === 40) {
+        e.preventDefault();
+        var r = document.querySelector(".suggest-result-item[tabindex]");
+        if (r) { r.focus(); return; }
+        var b = document.querySelector(".suggest-search-btn"); if (b) b.focus();
+    }
 });
 
 async function doSuggestSearch() {
@@ -595,13 +609,24 @@ async function doSuggestSearch() {
     `).join("");
 
     window._suggestItems = items;
+
+    // Torna resultados focáveis para navegação por seta
+    document.querySelectorAll(".suggest-result-item").forEach(function(el) {
+        el.setAttribute("tabindex", "0");
+    });
+    setTimeout(function() {
+        var first = document.querySelector(".suggest-result-item");
+        if (first) first.focus();
+    }, 80);
 }
 
 function selectSuggestion(i) {
     document.querySelectorAll(".suggest-result-item").forEach(el => el.classList.remove("selected"));
     document.getElementById("sr-" + i).classList.add("selected");
     _selectedSuggestion = window._suggestItems[i];
-    document.getElementById("suggestSendBtn").style.display = "";
+    var sendBtn = document.getElementById("suggestSendBtn");
+    sendBtn.style.display = "";
+    setTimeout(function() { sendBtn.focus(); }, 50);
 }
 
 async function sendSuggestion() {
@@ -761,6 +786,10 @@ if (window.performance && window.performance.navigation && window.performance.na
         // ─────────────────────────────────────────────────────────────────────
 
         var next = nearest(items, active, dir);
+        // remove-btn só é alvo direto se vier do seu próprio continue-card (via Up)
+        if (next && next.classList.contains("remove-btn") && !active.classList.contains("continue-card")) {
+            next = next.closest(".continue-card") || next;
+        }
         if (next) next.focus();
     });
 

@@ -45,7 +45,7 @@
         }
 
         .card:hover { transform: scale(1.05); background: #2a2a2a; }
-        .card:focus { transform: scale(1.08); background: #2a2a2a; outline: none; }
+        .card:focus { transform: scale(1.08); background: #2a2a2a; outline: none; box-shadow: 0 0 0 3px #e50914; }
 
         .poster {
             width: 160px;
@@ -285,13 +285,13 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
         var dir = kc===39?"right":kc===37?"left":kc===40?"down":kc===38?"up":null;
         if (!dir) return;
         e.preventDefault();
-        // Down de .card → wl-btn interno
-        if (dir==="down" && active.classList.contains("card")) {
+        // Up de .card → wl-btn interno (igual ao X)
+        if (dir==="up" && active.classList.contains("card")) {
             var wb = active.querySelector(".wl-btn"); if (wb) { wb.focus(); return; }
         }
-        // Qualquer seta de .wl-btn: Up/Left/Right → card pai; Down → spatial nav
+        // Qualquer seta de .wl-btn: Down/Left/Right → card pai; Up → spatial nav acima
         if (active.classList.contains("wl-btn")) {
-            if (dir!=="down") { var pc = active.closest(".card"); if (pc) { pc.focus(); return; } }
+            if (dir!=="up") { var pc = active.closest(".card"); if (pc) { pc.focus(); return; } }
         }
         var next = nearest(items, active, dir);
         if (next) next.focus();

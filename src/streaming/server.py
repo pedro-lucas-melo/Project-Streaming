@@ -84,7 +84,7 @@ class StreamingServer:
         if not profile:
             raise web.HTTPNotFound(reason="Perfil não encontrado")
         response = web.HTTPFound("/")
-        response.set_cookie("profile_id", str(profile_id), max_age=60 * 60 * 24 * 365)
+        response.set_cookie("profile_id", str(profile_id))
         raise response
 
     async def handle_profile_exit(self, request: web.Request):
