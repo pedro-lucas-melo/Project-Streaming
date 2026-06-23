@@ -552,7 +552,7 @@ async function sendSuggestion() {
             sendBtn.disabled = false;
             sendBtn.textContent = "Enviar pelo WhatsApp";
         }
-    } catch {
+    } catch (err) {
         document.getElementById("suggestStatus").textContent = "❌ Sem conexão com o servidor.";
         sendBtn.disabled = false;
         sendBtn.textContent = "Enviar pelo WhatsApp";

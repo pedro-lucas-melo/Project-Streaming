@@ -221,7 +221,7 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
             const rev = [...items].reverse();
             const ri = rev.findIndex((el) => items.indexOf(el) < idx && Math.abs(rect(el).left - cur.left) < cur.width * 0.6 && rect(el).bottom < cur.top - 4);
             if (ri !== -1) next = items.indexOf(rev[ri]);
-        } else if (e.key === "Enter") { document.activeElement.querySelector("[data-path]")?.click(); e.preventDefault(); return; }
+        } else if (e.key === "Enter") { var _el = document.activeElement.querySelector("[data-path]"); if (_el) _el.click(); e.preventDefault(); return; }
         else return;
         if (next >= 0 && next < items.length) { e.preventDefault(); items[next].focus(); }
     });
@@ -305,7 +305,7 @@ async function sendSuggestion() {
             sendBtn.disabled = false;
             sendBtn.textContent = "Enviar pelo WhatsApp";
         }
-    } catch {
+    } catch (err) {
         document.getElementById("suggestStatus").textContent = "❌ Sem conexão com o servidor.";
         sendBtn.disabled = false;
         sendBtn.textContent = "Enviar pelo WhatsApp";
