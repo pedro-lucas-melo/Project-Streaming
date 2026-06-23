@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://pedro.streaming/Streaming"
+        version="1.0.0"
+        viewmodes="maximized">
+
+    <tizen:application id="PedroStrm.StreamingTV"
+                       package="PedroStrm"
+                       required_version="3.0"/>
+
+    <content src="index.html"/>
+
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+
+    <icon src="icon.png"/>
+    <name>Streaming</name>
+    <name xml:lang="pt">Streaming</name>
+    <description>Player pessoal de streaming</description>
+
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/network.get"/>
+
+    <tizen:profile name="tv"/>
+
+    <tizen:setting screen-orientation="landscape"
+                   context-menu="disable"
+                   background-support="disable"
+                   encryption="disable"
+                   install-location="auto"
+                   hwkey-event="enable"/>
+</widget>
