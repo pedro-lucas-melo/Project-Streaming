@@ -355,12 +355,23 @@
     });
 
     // ── RETOMAR PROGRESSO ───────────────────────────────────────────────────
+    let _resumePosition = 0;
+
     video.addEventListener("loadedmetadata", async () => {
         const res = await fetch("/api/progress?path=" + encodeURIComponent(FILE_PATH));
         const { position } = await res.json();
         if (position && position > 5 && position < video.duration - 30) {
+            _resumePosition = position;
             video.currentTime = position;
             showOverlay("▶ Retomando…");
+        }
+    });
+
+    // TV/dispositivos lentos: seek pode ser ignorado antes de buffering suficiente.
+    // Reaplica a posição no canplay se ainda estiver longe do alvo.
+    video.addEventListener("canplay", () => {
+        if (_resumePosition > 0 && Math.abs(video.currentTime - _resumePosition) > 3) {
+            video.currentTime = _resumePosition;
         }
     });
 

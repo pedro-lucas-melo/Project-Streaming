@@ -171,7 +171,7 @@
             data-title="{{ s.name | e }}"
             data-poster="{{ s.poster_url | e }}"
             data-type="tv"
-            data-link="/series?name={{ s.name | urlencode }}"
+            data-link="/series?name={{ s.encoded_name | e }}"
             onclick="toggleWatchlist(this)">
             {% if s.in_watchlist %}✅ Na lista{% else %}＋ Assistir depois{% endif %}
         </button>

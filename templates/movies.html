@@ -169,7 +169,7 @@
             data-title="{{ movie.name | e }}"
             data-poster="{{ movie.poster_url | e }}"
             data-type="movie"
-            data-link="/watch?path={{ movie.path | urlencode }}"
+            data-link="/watch?path={{ movie.encoded_path | e }}"
             onclick="toggleWatchlist(this)">
             {% if movie.in_watchlist %}✅ Na lista{% else %}＋ Assistir depois{% endif %}
         </button>

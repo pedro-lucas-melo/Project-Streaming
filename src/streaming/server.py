@@ -157,7 +157,7 @@ class StreamingServer:
         series = []
         for name in series_names:
             meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
-            series.append({"name": name, "poster_url": meta.get("poster_url"), "in_watchlist": name in wl_keys})
+            series.append({"name": name, "poster_url": meta.get("poster_url"), "in_watchlist": name in wl_keys, "encoded_name": quote(name)})
         return {"series": series}
 
     @aiohttp_jinja2.template("movies.html")
@@ -180,7 +180,7 @@ class StreamingServer:
         movies = []
         for m in movies_raw:
             meta = await fetch_metadata(self.config.tmdb_token, m["name"], "movie")
-            movies.append({**m, "poster_url": meta.get("poster_url"), "in_watchlist": m["name"] in wl_keys})
+            movies.append({**m, "poster_url": meta.get("poster_url"), "in_watchlist": m["name"] in wl_keys, "encoded_path": quote(m["path"])})
         return {"movies": movies}
 
     @aiohttp_jinja2.template("series.html")
