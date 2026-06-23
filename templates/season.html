@@ -32,6 +32,22 @@
         }
 
         .card:hover { background: #444; transform: scale(1.02); }
+        .card:focus { background: #444; transform: scale(1.04); outline: none; box-shadow: 0 0 0 3px #e50914; }
+
+        .voltar {
+            display: inline-block;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: background 0.15s, transform 0.15s;
+        }
+        .voltar:hover { background: #555; }
+        .voltar:focus { background: #555; outline: none; transform: scale(1.05); box-shadow: 0 0 0 3px #e50914; }
 
         a { text-decoration: none; color: white; }
 
@@ -70,9 +86,49 @@
 
 <script>
 function openEpisode(el) {
-    const path = el.dataset.path;
-    window.location.href = "/watch?path=" + encodeURIComponent(path);
+    window.location.href = "/watch?path=" + encodeURIComponent(el.dataset.path);
 }
+(function() {
+    function getFocusable() {
+        return Array.prototype.slice.call(document.querySelectorAll('.card[data-path], .voltar'))
+            .filter(function(el) { return el.offsetParent !== null; });
+    }
+    function nearest(items, cur, dir) {
+        var cr = cur.getBoundingClientRect(), best = null, bestScore = Infinity;
+        items.forEach(function(el) {
+            if (el === cur) return;
+            var r = el.getBoundingClientRect();
+            var ok = dir==="down"?r.top>=cr.bottom-5:dir==="up"?r.bottom<=cr.top+5:dir==="right"?r.left>=cr.right-5:r.right<=cr.left+5;
+            if (!ok) return;
+            var cx=r.left+r.width/2, cy=r.top+r.height/2, mx=cr.left+cr.width/2;
+            var primary=dir==="down"?r.top-cr.bottom:dir==="up"?cr.top-r.bottom:dir==="right"?r.left-cr.right:cr.left-r.right;
+            var score=primary+((dir==="down"||dir==="up")?Math.abs(cx-mx):Math.abs(cy-(cr.top+cr.height/2)))*0.5;
+            if (score < bestScore) { bestScore=score; best=el; }
+        });
+        return best;
+    }
+    var all = getFocusable();
+    all.forEach(function(el){ if(!el.getAttribute("tabindex")) el.setAttribute("tabindex","0"); });
+    if (all.length) setTimeout(function(){ all[0].focus(); }, 100);
+
+    document.addEventListener("keydown", function(e) {
+        var kc = e.keyCode || e.which;
+        if (kc===10009||e.key==="XF86Back") { e.preventDefault(); window.location.href="/series?name={{ series | e }}"; return; }
+        var items = getFocusable(), active = document.activeElement;
+        if (items.indexOf(active) === -1) { if (kc===37||kc===38||kc===39||kc===40) { e.preventDefault(); items[0]&&items[0].focus(); } return; }
+        if (kc===13||e.key==="Enter") {
+            e.preventDefault();
+            if (active.dataset && active.dataset.path) { openEpisode(active); }
+            else { active.click(); }
+            return;
+        }
+        var dir=kc===39?"right":kc===37?"left":kc===40?"down":kc===38?"up":null;
+        if (!dir) return;
+        e.preventDefault();
+        var next = nearest(items, active, dir);
+        if (next) next.focus();
+    });
+})();
 </script>
 
 </body>

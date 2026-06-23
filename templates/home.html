@@ -77,12 +77,16 @@
 
         .card .icon { margin-bottom: 0.5rem; }
 
-        .card:hover, .card:focus {
+        .card:hover {
             background: #444;
             transform: scale(1.05);
             cursor: pointer;
-            outline: 3px solid #e50914;
-            outline-offset: 2px;
+        }
+
+        .card:focus {
+            background: #444;
+            transform: scale(1.08);
+            outline: none;
         }
 
         .card .icon {
@@ -125,6 +129,28 @@
         }
 
         .continue-card:hover { transform: scale(1.04); }
+        .continue-card:focus { outline: none; transform: scale(1.06); box-shadow: 0 0 0 3px #e50914; }
+
+        /* ── BOTÕES TV ── */
+        .tv-btn {
+            display: inline-block;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: background 0.15s, transform 0.15s;
+        }
+        .tv-btn:hover, .tv-btn:focus {
+            background: #555;
+            outline: none;
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px #e50914;
+        }
 
         .continue-card a.card-link {
             display: block;
@@ -194,21 +220,22 @@
             position: absolute;
             top: 6px;
             right: 6px;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.65);
+            background: rgba(0,0,0,0.75);
             border: none;
             color: white;
             font-size: 14px;
-            line-height: 24px;
+            line-height: 28px;
             text-align: center;
             cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.15s;
+            opacity: 0.5;
+            transition: opacity 0.15s, box-shadow 0.15s;
             z-index: 10;
             padding: 0;
         }
+        .remove-btn:focus { opacity: 1; outline: none; box-shadow: 0 0 0 2px #e50914; background: rgba(180,0,0,0.85); }
 
         .continue-card:hover .remove-btn { opacity: 1; }
         .remove-btn:hover { background: rgba(180,0,0,0.8); }
@@ -266,6 +293,7 @@
             transition: background 0.15s, transform 0.15s;
         }
         .suggest-fab:hover { background: #c0070f; transform: scale(1.05); }
+        .suggest-fab:focus { background: #c0070f; transform: scale(1.05); outline: none; box-shadow: 0 0 0 3px white; }
 
         /* ── MODAL SUGESTÃO ── */
         .suggest-modal-overlay {
@@ -361,7 +389,7 @@
 
 <p style="color:#aaa; margin-bottom:1rem; font-size:0.95rem;">
     Olá, <strong style="color:white">{{ profile.name }}</strong> —
-    <a href="/profiles/exit" style="color:#aaa; text-decoration:underline;">Trocar perfil</a>
+    <a href="/profiles/exit" id="trocarPerfil" class="tv-btn" style="font-size:0.85rem; padding:8px 16px;">Trocar perfil</a>
 </p>
 
 <div class="home-layout">
@@ -616,50 +644,132 @@ if (window.performance && window.performance.navigation && window.performance.na
     window.location.reload();
 }
 
-// ── NAVEGAÇÃO TV (arrow keys nos cards de categoria) ─────────────────────────
+// ── NAVEGAÇÃO TV (spatial) ────────────────────────────────────────────────────
 (function() {
-    // Delega clique do card para o link interno (TV D-pad dispara click no elemento focado,
-    // que é o .continue-card ou .card externo, não o <a> interno)
-    function activateCard(el) {
-        var link = el.querySelector("a");
+
+    // Quando modal abre, foca o botão Cancelar automaticamente (mais seguro)
+    (new MutationObserver(function(muts) {
+        muts.forEach(function(m) {
+            if (m.target.classList.contains("show")) {
+                var btn = m.target.querySelector(".modal-btn.cancel, .modal-btn.confirm");
+                if (btn) setTimeout(function(){ btn.focus(); }, 50);
+            }
+        });
+    })).observe(document.getElementById("removeModal"), { attributes: true, attributeFilter: ["class"] });
+
+    function isModalOpen() {
+        return !!(document.querySelector(".modal-overlay.show, .suggest-modal-overlay.show"));
+    }
+
+    function getModalFocusable() {
+        var modal = document.querySelector(".modal-overlay.show, .suggest-modal-overlay.show");
+        if (!modal) return [];
+        return Array.prototype.slice.call(
+            modal.querySelectorAll("button, input, a, [tabindex]")
+        ).filter(function(el) {
+            return el.offsetParent !== null && getComputedStyle(el).display !== "none";
+        });
+    }
+
+    function getFocusable() {
+        if (isModalOpen()) return getModalFocusable();
+        return Array.prototype.slice.call(document.querySelectorAll(
+            ".home-nav .card, .continue-card, .remove-btn, #trocarPerfil, .suggest-fab"
+        )).filter(function(el) {
+            // fixed elements têm offsetParent===null mas são visíveis
+            var s = getComputedStyle(el);
+            return s.display !== "none" && s.visibility !== "hidden" &&
+                   (el.offsetParent !== null || s.position === "fixed");
+        });
+    }
+
+    function nearest(items, cur, dir) {
+        var cr = cur.getBoundingClientRect(), best = null, bestScore = Infinity;
+        items.forEach(function(el) {
+            if (el === cur) return;
+            var r = el.getBoundingClientRect();
+            var ok = dir==="down"?r.top>=cr.bottom-5:dir==="up"?r.bottom<=cr.top+5:dir==="right"?r.left>=cr.right-5:r.right<=cr.left+5;
+            if (!ok) return;
+            var cx=r.left+r.width/2, cy=r.top+r.height/2, mx=cr.left+cr.width/2, my=cr.top+cr.height/2;
+            var primary=dir==="down"?r.top-cr.bottom:dir==="up"?cr.top-r.bottom:dir==="right"?r.left-cr.right:cr.left-r.right;
+            var score=primary+((dir==="down"||dir==="up")?Math.abs(cx-mx):Math.abs(cy-my))*0.5;
+            if (score<bestScore){bestScore=score;best=el;}
+        });
+        return best;
+    }
+
+    function activate(el) {
+        if (el.tagName==="BUTTON"||el.tagName==="A") { el.click(); return; }
+        var link = el.querySelector("a.card-link, a");
         if (link) { window.location.href = link.href; } else { el.click(); }
     }
 
-    // Adiciona delegação de clique em todos os continue-cards
-    var cards = document.querySelectorAll(".continue-card");
-    for (var ci = 0; ci < cards.length; ci++) {
-        (function(card) {
-            card.addEventListener("click", function(e) {
-                if (e.target === card || e.target.classList.contains("continue-poster") || e.target.classList.contains("continue-poster-placeholder") || e.target.classList.contains("continue-info") || e.target.classList.contains("continue-title") || e.target.classList.contains("continue-subtitle") || e.target.classList.contains("progress-track") || e.target.classList.contains("progress-fill") || e.target.classList.contains("continue-pct")) {
-                    var link = card.querySelector("a");
-                    if (link) window.location.href = link.href;
-                }
-            });
-        })(cards[ci]);
+    function closeOpenModal() {
+        var cancelBtn = document.querySelector(".modal-overlay.show .modal-btn.cancel, .suggest-modal-overlay.show .modal-btn.cancel");
+        if (cancelBtn) cancelBtn.click();
     }
 
-    var focusable = function() { return Array.prototype.slice.call(document.querySelectorAll(".card, .continue-card")); };
+    // Clique em continue-card → abre link (ignora botões internos)
+    var ccards = document.querySelectorAll(".continue-card");
+    for (var ci = 0; ci < ccards.length; ci++) {
+        (function(card) {
+            card.addEventListener("click", function(e) {
+                if (e.target.tagName==="BUTTON") return;
+                var link = card.querySelector("a.card-link");
+                if (link) window.location.href = link.href;
+            });
+        })(ccards[ci]);
+    }
+
     document.addEventListener("keydown", function(e) {
-        if (["INPUT","TEXTAREA","SELECT"].indexOf(document.activeElement.tagName) !== -1) return;
-        var items = focusable();
+        if (["INPUT","TEXTAREA","SELECT"].indexOf(document.activeElement.tagName)!==-1) return;
+        var kc = e.keyCode || e.which;
+
+        // Back: fecha modal se aberto, senão vai pra perfis
+        if (kc===10009||e.key==="XF86Back") {
+            e.preventDefault();
+            if (isModalOpen()) { closeOpenModal(); } else { window.location.href="/profiles/exit"; }
+            return;
+        }
+
+        var items = getFocusable();
         if (!items.length) return;
-        var idx = items.indexOf(document.activeElement);
-        if (idx === -1) { if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].indexOf(e.key) !== -1) { e.preventDefault(); items[0].focus(); } return; }
-        var rect = function(el) { return el.getBoundingClientRect(); };
-        var cur = rect(items[idx]);
-        var next = -1;
-        if (e.key === "ArrowRight") next = idx + 1;
-        else if (e.key === "ArrowLeft") next = idx - 1;
-        else if (e.key === "ArrowDown") {
-            for (var i = idx + 1; i < items.length; i++) { if (Math.abs(rect(items[i]).left - cur.left) < cur.width * 0.6 && rect(items[i]).top > cur.top + 4) { next = i; break; } }
-        } else if (e.key === "ArrowUp") {
-            for (var j = idx - 1; j >= 0; j--) { if (Math.abs(rect(items[j]).left - cur.left) < cur.width * 0.6 && rect(items[j]).bottom < cur.top - 4) { next = j; break; } }
-        } else if (e.key === "Enter") { activateCard(document.activeElement); e.preventDefault(); return; }
-        else return;
-        if (next >= 0 && next < items.length) { e.preventDefault(); items[next].focus(); }
+        var active = document.activeElement;
+        var inList = items.indexOf(active)!==-1;
+
+        if (!inList) {
+            if (kc===37||kc===38||kc===39||kc===40) { e.preventDefault(); items[0].focus(); }
+            return;
+        }
+
+        if (kc===13||e.key==="Enter") { e.preventDefault(); activate(active); return; }
+
+        var dir = kc===39?"right":kc===37?"left":kc===40?"down":kc===38?"up":null;
+        if (!dir) return;
+        e.preventDefault();
+
+        // ── Casos especiais para X button ──────────────────────────────────────
+        // Up de continue-card → X do mesmo card (antes de ir pro elemento acima)
+        if (dir==="up" && active.classList.contains("continue-card")) {
+            var rb = active.querySelector(".remove-btn");
+            if (rb) { rb.focus(); return; }
+        }
+        // Down/Left/Right de remove-btn → volta pro card pai
+        if (active.classList.contains("remove-btn")) {
+            if (dir !== "up") { var pc = active.closest(".continue-card"); if (pc) { pc.focus(); return; } }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        var next = nearest(items, active, dir);
+        if (next) next.focus();
     });
-    var all = focusable();
-    for (var fi = 0; fi < all.length; fi++) { if (!all[fi].getAttribute("tabindex")) all[fi].setAttribute("tabindex", "0"); }
+
+    // tabindex + auto-focus
+    var all = getFocusable();
+    all.forEach(function(el){ if(!el.getAttribute("tabindex")) el.setAttribute("tabindex","0"); });
+    document.querySelectorAll(".remove-btn").forEach(function(b){ b.setAttribute("tabindex","0"); });
+    var navCard = document.querySelector(".home-nav .card");
+    if (navCard) setTimeout(function(){ navCard.focus(); }, 100);
 })();
 </script>
 </body>

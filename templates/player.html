@@ -33,25 +33,6 @@
             background: black;
         }
 
-        /* ── BOTÃO VOLTAR ── */
-        .back {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 20;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .back.show { opacity: 1; }
-
-        .back a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-        }
-
         /* ── OVERLAY ── */
         .overlay {
             position: absolute;
@@ -215,10 +196,6 @@
 <body>
 <div class="container">
 
-    <div class="back" id="backButton">
-        <a href="javascript:history.back()">← Voltar</a>
-    </div>
-
     <video id="video" autoplay data-resume="{{ resume_position }}">
         <source src="/video?path={{ encoded_path }}">
     </video>
@@ -245,12 +222,11 @@
             </div>
         </div>
         <div class="btn-row">
-            <button class="ctrl-btn" id="playPauseBtn" title="Play/Pause [Espaço]">▶</button>
-            <button class="ctrl-btn" id="backwardBtn" title="Voltar 10s [←]">⏪ 10s</button>
-            <button class="ctrl-btn" id="forwardBtn"  title="Avançar 10s [→]">10s ⏩</button>
-            <button class="ctrl-btn" id="muteBtn"     title="Mudo [M]">🔊</button>
+            <button class="ctrl-btn" id="playPauseBtn" title="Play/Pause">▶</button>
+            <button class="ctrl-btn" id="backwardBtn"  title="Voltar 10s">⏪ 10s</button>
+            <button class="ctrl-btn" id="forwardBtn"   title="Avançar 10s">10s ⏩</button>
+            <button class="ctrl-btn" id="muteBtn"      title="Mudo">🔊</button>
             <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
-            <button class="ctrl-btn" id="fullscreenBtn" title="Tela cheia [F]">⛶</button>
         </div>
     </div>
 
@@ -260,19 +236,17 @@
 (function () {
     const FILE_PATH = new URLSearchParams(location.search).get("path");
 
-    const video          = document.getElementById("video");
-    const overlay        = document.getElementById("overlay");
-    const backButton     = document.getElementById("backButton");
-    const controls      = document.getElementById("controls");
+    const video           = document.getElementById("video");
+    const overlay         = document.getElementById("overlay");
+    const controls        = document.getElementById("controls");
     const progressWrapper = document.getElementById("progressWrapper");
-    const progressBar    = document.getElementById("progressBar");
-    const playPauseBtn   = document.getElementById("playPauseBtn");
-    const backwardBtn    = document.getElementById("backwardBtn");
-    const forwardBtn     = document.getElementById("forwardBtn");
-    const muteBtn        = document.getElementById("muteBtn");
-    const fullscreenBtn  = document.getElementById("fullscreenBtn");
-    const timeDisplay    = document.getElementById("timeDisplay");
-    const spinner        = document.getElementById("spinner");
+    const progressBar     = document.getElementById("progressBar");
+    const playPauseBtn    = document.getElementById("playPauseBtn");
+    const backwardBtn     = document.getElementById("backwardBtn");
+    const forwardBtn      = document.getElementById("forwardBtn");
+    const muteBtn         = document.getElementById("muteBtn");
+    const timeDisplay     = document.getElementById("timeDisplay");
+    const spinner         = document.getElementById("spinner");
 
     let overlayTimer;
     let controlsTimer;
@@ -287,17 +261,22 @@
 
     // ── CONTROLES ───────────────────────────────────────────────────────────
     function showControls() {
-        backButton.classList.add("show");
         controls.classList.add("show");
         document.body.classList.remove("hide-cursor");
         clearTimeout(controlsTimer);
         controlsTimer = setTimeout(() => {
             if (!video.paused) {
-                backButton.classList.remove("show");
                 controls.classList.remove("show");
                 document.body.classList.add("hide-cursor");
             }
         }, 3000);
+    }
+
+    // Auto-fullscreen ao iniciar
+    function tryFullscreen() {
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullscreen;
+        if (req) req.call(el).catch(function(){});
     }
 
     document.addEventListener("mousemove", showControls);
@@ -390,16 +369,7 @@
     }
     muteBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleMute(); });
 
-    // ── FULLSCREEN ──────────────────────────────────────────────────────────
-    function toggleFullscreen() {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-        } else {
-            const el = document.documentElement;
-            (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
-        }
-    }
-    fullscreenBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleFullscreen(); });
+    video.addEventListener("play", tryFullscreen, { once: true });
 
     // ── SPINNER DE BUFFERING ─────────────────────────────────────────────────
     video.addEventListener("waiting", () => spinner.classList.add("show"));
@@ -408,23 +378,37 @@
 
     // ── TECLADO ─────────────────────────────────────────────────────────────
     document.addEventListener("keydown", (e) => {
-        // Ignora quando foco está em input
         if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName)) return;
+        const kc = e.keyCode || e.which;
+
+        // Sempre mostra controles em qualquer tecla
+        showControls();
+
+        // Back (Samsung TV = 10009, teclado = Escape/Backspace)
+        if (kc === 10009 || e.key === "XF86Back" || e.key === "Escape" || e.key === "Backspace") {
+            e.preventDefault(); history.back(); return;
+        }
+
+        // OK/Enter → play/pause
+        if (kc === 13 || e.key === "Enter") {
+            e.preventDefault(); togglePlay(); return;
+        }
+
+        // Botões de mídia do controle remoto
+        if (kc === 415 || e.key === "MediaPlay")       { e.preventDefault(); video.play();   showOverlay("▶"); return; }
+        if (kc === 19  || e.key === "MediaPause")      { e.preventDefault(); video.pause();  showOverlay("⏸"); return; }
+        if (kc === 10252|| e.key === "MediaPlayPause") { e.preventDefault(); togglePlay();   return; }
+        if (kc === 417 || e.key === "MediaFastForward"){ e.preventDefault(); seek(30);       return; }
+        if (kc === 412 || e.key === "MediaRewind")     { e.preventDefault(); seek(-30);      return; }
 
         switch (e.key) {
             case " ":
             case "k":
-                e.preventDefault();
-                togglePlay();
-                break;
+                e.preventDefault(); togglePlay(); break;
             case "ArrowRight":
-                e.preventDefault();
-                seek(10);
-                break;
+                e.preventDefault(); seek(10); break;
             case "ArrowLeft":
-                e.preventDefault();
-                seek(-10);
-                break;
+                e.preventDefault(); seek(-10); break;
             case "ArrowUp":
                 e.preventDefault();
                 video.volume = Math.min(1, video.volume + 0.1);
@@ -435,21 +419,8 @@
                 video.volume = Math.max(0, video.volume - 0.1);
                 showOverlay("🔉 " + Math.round(video.volume * 100) + "%");
                 break;
-            case "m":
-            case "M":
-                e.preventDefault();
-                toggleMute();
-                break;
-            case "f":
-            case "F":
-                e.preventDefault();
-                toggleFullscreen();
-                break;
-            case "Escape":
-            case "Backspace":
-                e.preventDefault();
-                history.back();
-                break;
+            case "m": case "M":
+                e.preventDefault(); toggleMute(); break;
         }
     });
 
