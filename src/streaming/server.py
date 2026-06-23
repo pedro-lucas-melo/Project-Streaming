@@ -5,6 +5,7 @@ import jinja2
 import aiohttp_jinja2
 import os
 import pathlib
+from urllib.parse import quote
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 
@@ -94,7 +95,7 @@ class StreamingServer:
         path = request.query.get("path")
         if not path:
             raise web.HTTPBadRequest(reason="Caminho não especificado")
-        return {"path": path}
+        return {"path": path, "encoded_path": quote(path)}
 
     async def handle_video(self, request):
         file_path = request.query.get("path")
