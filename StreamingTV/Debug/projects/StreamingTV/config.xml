@@ -3,9 +3,9 @@
         xmlns:tizen="http://tizen.org/ns/widgets"
         id="http://pedro.streaming/StreamingTV"
         version="1.0.0">
-    <tizen:application id="PedroStrm.StreamingTV"
-                       package="PedroStrm"
-                       required_version="4.0"/>
+    <tizen:application id="PedroStr0.StreamingTV"
+                       package="PedroStr0"
+                       required_version="5.0"/>
     <content src="index.html"/>
     <icon src="icon.png"/>
     <name>Streaming</name>
