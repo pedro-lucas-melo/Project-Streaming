@@ -2,6 +2,7 @@ from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
 from streaming.database import init_db, get_all_profiles, get_profile, upsert_progress, get_progress, get_in_progress
+from streaming.tmdb import fetch_metadata
 import jinja2
 import aiohttp_jinja2
 import os
@@ -96,14 +97,19 @@ class StreamingServer:
         if not self.series_library:
             raise web.HTTPNotFound(reason="Diretório de séries não configurado")
         structure = self.series_library.get_structure()
-        return {"series": sorted(structure.keys())}
+        series_names = sorted(structure.keys())
+        series = []
+        for name in series_names:
+            meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
+            series.append({"name": name, "poster_url": meta.get("poster_url")})
+        return {"series": series}
 
     @aiohttp_jinja2.template("movies.html")
     async def handle_movies(self, request):
         if not self.movies_library:
             raise web.HTTPNotFound(reason="Diretório de filmes não configurado")
         videos = self.movies_library.list_videos()
-        movies = sorted(
+        movies_raw = sorted(
             [
                 {
                     "name": v["name"][:-4] if v["name"].lower().endswith((".mp4", ".mkv")) else v["name"],
@@ -113,6 +119,10 @@ class StreamingServer:
             ],
             key=lambda x: x["name"],
         )
+        movies = []
+        for m in movies_raw:
+            meta = await fetch_metadata(self.config.tmdb_token, m["name"], "movie")
+            movies.append({**m, "poster_url": meta.get("poster_url")})
         return {"movies": movies}
 
     @aiohttp_jinja2.template("series.html")

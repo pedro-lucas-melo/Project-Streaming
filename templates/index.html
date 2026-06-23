@@ -1,14 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <title>Streaming</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Séries</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             background: #111;
             color: white;
-            font-family: Arial;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        h1 {
             text-align: center;
+            padding: 30px 0 20px;
+            font-size: 1.8rem;
         }
 
         .grid {
@@ -16,50 +25,78 @@
             justify-content: center;
             gap: 20px;
             flex-wrap: wrap;
-            margin-top: 40px;
+            padding: 20px 30px 50px;
         }
 
         .card {
-            background: #222;
-            padding: 20px;
-            border-radius: 10px;
-            width: 200px;
-            transition: 0.2s;
-        }
-
-        .card:hover {
-            background: #444;
-            transform: scale(1.05);
+            width: 160px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1e1e1e;
+            transition: transform 0.15s, background 0.15s;
             cursor: pointer;
-        }
-
-        a {
             text-decoration: none;
             color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover { transform: scale(1.05); background: #2a2a2a; }
+
+        .poster {
+            width: 160px;
+            height: 240px;
+            object-fit: cover;
+            background: #333;
+            display: block;
+        }
+
+        .poster-placeholder {
+            width: 160px;
+            height: 240px;
+            background: #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .card-title {
+            padding: 10px 10px 12px;
+            font-size: 0.85rem;
+            color: #ddd;
+            text-align: center;
+            line-height: 1.3;
         }
 
         .voltar {
-            display: inline-block;
-            margin-top: 30px;
+            display: block;
+            text-align: center;
+            padding-bottom: 30px;
             color: #aaa;
+            text-decoration: none;
         }
+
+        .voltar:hover { color: white; }
     </style>
 </head>
-<body tabindex="0">
+<body>
 
 <h1>🎬 Séries</h1>
 
 <div class="grid">
     {% for s in series %}
-        <a href="/series?name={{ s }}">
-            <div class="card" {% if loop.first %}autofocus{% endif %}>
-                {{ s }}
-            </div>
-        </a>
+    <a class="card" href="/series?name={{ s.name }}">
+        {% if s.poster_url %}
+        <img class="poster" src="{{ s.poster_url }}" alt="{{ s.name }}" loading="lazy">
+        {% else %}
+        <div class="poster-placeholder">🎬</div>
+        {% endif %}
+        <div class="card-title">{{ s.name }}</div>
+    </a>
     {% endfor %}
 </div>
 
-<br>
 <a class="voltar" href="/">← Voltar</a>
 
 </body>

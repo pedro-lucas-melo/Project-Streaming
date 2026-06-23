@@ -15,6 +15,7 @@ class ConfigManager:
 
         self.host = os.getenv("HOST", "0.0.0.0")
         self.port = int(os.getenv("PORT", 8080))
+        self.tmdb_token = os.getenv("TMDB_API_READ_TOKEN", "")
 
         self._validate()
 

@@ -10,6 +10,16 @@ _STATEMENTS = [
         name TEXT NOT NULL UNIQUE
     )
     """,
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS media_metadata (
+        media_key   TEXT PRIMARY KEY,
+        tmdb_id     INTEGER,
+        poster_url  TEXT,
+        overview    TEXT,
+        fetched_at  TEXT NOT NULL
+    )
+    """,
     """
     CREATE TABLE IF NOT EXISTS watch_progress (
         profile_id  INTEGER NOT NULL,
@@ -71,6 +81,34 @@ async def get_progress(profile_id: int, file_path: str) -> dict | None:
         ) as cur:
             row = await cur.fetchone()
     return dict(row) if row else None
+
+
+async def get_metadata(media_key: str) -> dict | None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT tmdb_id, poster_url, overview FROM media_metadata WHERE media_key = ?",
+            (media_key,),
+        ) as cur:
+            row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def upsert_metadata(media_key: str, tmdb_id: int | None, poster_url: str | None, overview: str | None):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            """
+            INSERT INTO media_metadata (media_key, tmdb_id, poster_url, overview, fetched_at)
+            VALUES (?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(media_key) DO UPDATE SET
+                tmdb_id    = excluded.tmdb_id,
+                poster_url = excluded.poster_url,
+                overview   = excluded.overview,
+                fetched_at = excluded.fetched_at
+            """,
+            (media_key, tmdb_id, poster_url, overview),
+        )
+        await db.commit()
 
 
 async def get_in_progress(profile_id: int) -> list[dict]:
