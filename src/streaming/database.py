@@ -110,6 +110,15 @@ async def upsert_metadata(media_key: str, tmdb_id: int | None, poster_url: str |
         await db.commit()
 
 
+async def delete_progress(profile_id: int, file_path: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "DELETE FROM watch_progress WHERE profile_id = ? AND file_path = ?",
+            (profile_id, file_path),
+        )
+        await db.commit()
+
+
 async def get_in_progress(profile_id: int) -> list[dict]:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row

@@ -61,7 +61,7 @@
         /* ── CONTINUAR ASSISTINDO ── */
         .continue-section {
             width: 100%;
-            max-width: 860px;
+            max-width: 900px;
             margin-bottom: 3rem;
             text-align: left;
         }
@@ -81,35 +81,68 @@
         }
 
         .continue-card {
-            background: #1e1e1e;
+            position: relative;
+            width: 160px;
             border-radius: 8px;
-            padding: 14px 18px;
+            overflow: hidden;
+            background: #1e1e1e;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.15s;
+        }
+
+        .continue-card:hover { transform: scale(1.04); }
+
+        .continue-card a.card-link {
+            display: block;
             text-decoration: none;
             color: white;
-            width: 260px;
+        }
+
+        .continue-poster {
+            width: 160px;
+            height: 240px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .continue-poster-placeholder {
+            width: 160px;
+            height: 240px;
+            background: #2a2a2a;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            transition: background 0.15s, transform 0.15s;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
         }
 
-        .continue-card:hover {
-            background: #2e2e2e;
-            transform: scale(1.02);
+        .continue-info {
+            padding: 8px 10px 10px;
         }
 
-        .continue-card .title {
-            font-size: 0.9rem;
+        .continue-title {
+            font-size: 0.82rem;
+            font-weight: bold;
+            color: #eee;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #ddd;
+        }
+
+        .continue-subtitle {
+            font-size: 0.72rem;
+            color: #aaa;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .progress-track {
             height: 3px;
             background: #444;
             border-radius: 2px;
+            margin-top: 6px;
         }
 
         .progress-fill {
@@ -117,6 +150,35 @@
             background: #e50914;
             border-radius: 2px;
         }
+
+        .continue-pct {
+            font-size: 0.68rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.65);
+            border: none;
+            color: white;
+            font-size: 14px;
+            line-height: 24px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 10;
+            padding: 0;
+        }
+
+        .continue-card:hover .remove-btn { opacity: 1; }
+        .remove-btn:hover { background: rgba(180,0,0,0.8); }
     </style>
 </head>
 <body>
@@ -133,12 +195,26 @@
     <h2>Continuar assistindo</h2>
     <div class="continue-list">
         {% for item in in_progress %}
-        <a class="continue-card" href="/watch?path={{ item.encoded_path }}">
-            <span class="title">{{ item.label }}</span>
-            <div class="progress-track">
-                <div class="progress-fill" style="width: {{ item.pct }}%"></div>
-            </div>
-        </a>
+        <div class="continue-card" id="card-{{ loop.index }}">
+            <button class="remove-btn" onclick="removeProgress(event, '{{ item.file_path | e }}', 'card-{{ loop.index }}')" title="Remover">✕</button>
+            <a class="card-link" href="/watch?path={{ item.encoded_path }}">
+                {% if item.poster_url %}
+                <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
+                {% else %}
+                <div class="continue-poster-placeholder">{% if item.type == 'series' %}🎬{% else %}🎥{% endif %}</div>
+                {% endif %}
+                <div class="continue-info">
+                    <div class="continue-title">{{ item.title }}</div>
+                    {% if item.subtitle %}
+                    <div class="continue-subtitle">{{ item.subtitle }}</div>
+                    {% endif %}
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: {{ item.pct }}%"></div>
+                    </div>
+                    <div class="continue-pct">{{ item.pct }}% concluído</div>
+                </div>
+            </a>
+        </div>
         {% endfor %}
     </div>
 </div>
@@ -155,5 +231,18 @@
     </a>
 </div>
 
+<script>
+async function removeProgress(e, filePath, cardId) {
+    e.preventDefault();
+    e.stopPropagation();
+    await fetch("/api/progress?" + new URLSearchParams({ path: filePath }), { method: "DELETE" });
+    const card = document.getElementById(cardId);
+    if (card) card.remove();
+    const list = document.querySelector(".continue-list");
+    if (list && !list.children.length) {
+        document.querySelector(".continue-section").remove();
+    }
+}
+</script>
 </body>
 </html>

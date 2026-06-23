@@ -1,7 +1,7 @@
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
-from streaming.database import init_db, get_all_profiles, get_profile, upsert_progress, get_progress, get_in_progress
+from streaming.database import init_db, get_all_profiles, get_profile, upsert_progress, get_progress, get_in_progress, delete_progress
 from streaming.tmdb import fetch_metadata
 import jinja2
 import aiohttp_jinja2
@@ -42,6 +42,7 @@ class StreamingServer:
         self.app.router.add_get("/movies", self.handle_movies)
         self.app.router.add_post("/api/progress", self.handle_progress_save)
         self.app.router.add_get("/api/progress", self.handle_progress_get)
+        self.app.router.add_delete("/api/progress", self.handle_progress_delete)
         self.app.on_startup.append(self._on_startup)
 
     async def _on_startup(self, app):
@@ -86,11 +87,49 @@ class StreamingServer:
         if not profile:
             raise web.HTTPFound("/profiles")
         in_progress = await get_in_progress(profile_id)
+        series_base = os.path.abspath(self.config.media_series_dir).lower() if self.config.media_series_dir else ""
+        enriched = []
         for item in in_progress:
-            item["label"] = pathlib.Path(item["file_path"]).stem
-            item["pct"] = int((item["position"] / item["duration"]) * 100)
-            item["encoded_path"] = quote(item["file_path"])
-        return {"profile": profile, "in_progress": in_progress}
+            fp = item["file_path"]
+            abs_fp = os.path.abspath(fp).lower()
+            pct = int((item["position"] / item["duration"]) * 100)
+            encoded_path = quote(fp)
+            if series_base and abs_fp.startswith(series_base):
+                parts = pathlib.Path(fp).parts
+                # estrutura: .../series/SeriesName/Season/Episode.mp4
+                series_idx = next((i for i, p in enumerate(parts) if p.lower() == pathlib.Path(self.config.media_series_dir).name.lower()), None)
+                if series_idx is not None and len(parts) > series_idx + 2:
+                    series_name = parts[series_idx + 1]
+                    episode_name = pathlib.Path(fp).stem
+                else:
+                    series_name = pathlib.Path(fp).stem
+                    episode_name = None
+                meta = await fetch_metadata(self.config.tmdb_token, series_name, "tv")
+                enriched.append({
+                    "type": "series",
+                    "title": series_name,
+                    "subtitle": episode_name,
+                    "poster_url": meta.get("poster_url"),
+                    "pct": pct,
+                    "encoded_path": encoded_path,
+                    "file_path": fp,
+                })
+            else:
+                movie_name = pathlib.Path(fp).stem
+                for ext in (".mp4", ".mkv"):
+                    if movie_name.lower().endswith(ext):
+                        movie_name = movie_name[:-len(ext)]
+                meta = await fetch_metadata(self.config.tmdb_token, movie_name, "movie")
+                enriched.append({
+                    "type": "movie",
+                    "title": movie_name,
+                    "subtitle": None,
+                    "poster_url": meta.get("poster_url"),
+                    "pct": pct,
+                    "encoded_path": encoded_path,
+                    "file_path": fp,
+                })
+        return {"profile": profile, "in_progress": enriched}
 
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
@@ -226,6 +265,16 @@ class StreamingServer:
             return response
 
         return web.FileResponse(path=file_path, headers={"Content-Type": content_type})
+
+    async def handle_progress_delete(self, request: web.Request):
+        profile_id = self._require_profile(request)
+        if not profile_id:
+            return web.Response(status=401)
+        file_path = request.query.get("path", "")
+        if not file_path:
+            return web.Response(status=400)
+        await delete_progress(profile_id, file_path)
+        return web.Response(status=204)
 
     async def handle_progress_save(self, request: web.Request):
         profile_id = self._require_profile(request)
