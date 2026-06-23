@@ -3,29 +3,33 @@ import pathlib
 
 DB_PATH = pathlib.Path(__file__).resolve().parent.parent.parent / "streaming.db"
 
-_SCHEMA = """
-CREATE TABLE IF NOT EXISTS profiles (
-    id   INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS watch_progress (
-    profile_id  INTEGER NOT NULL,
-    file_path   TEXT NOT NULL,
-    position    REAL NOT NULL,
-    duration    REAL,
-    updated_at  TEXT NOT NULL,
-    PRIMARY KEY (profile_id, file_path),
-    FOREIGN KEY (profile_id) REFERENCES profiles(id)
-);
-"""
+_STATEMENTS = [
+    """
+    CREATE TABLE IF NOT EXISTS profiles (
+        id   INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS watch_progress (
+        profile_id  INTEGER NOT NULL,
+        file_path   TEXT NOT NULL,
+        position    REAL NOT NULL,
+        duration    REAL,
+        updated_at  TEXT NOT NULL,
+        PRIMARY KEY (profile_id, file_path),
+        FOREIGN KEY (profile_id) REFERENCES profiles(id)
+    )
+    """,
+]
 
 _SEED = [("Pedro",), ("Francieli",)]
 
 
 async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute(_SCHEMA)
+        for stmt in _STATEMENTS:
+            await db.execute(stmt)
         await db.commit()
         for (name,) in _SEED:
             await db.execute(
