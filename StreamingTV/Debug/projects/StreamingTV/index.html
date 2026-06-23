@@ -9,21 +9,33 @@ h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
 p { color: #aaa; font-size: 1rem; margin-bottom: 2rem; }
 input { background: #222; border: 2px solid #555; color: white; padding: 14px 20px; border-radius: 10px; font-size: 1.1rem; width: 320px; outline: none; }
 input:focus { border-color: #e50914; }
-.btn { background: #e50914; color: white; border: none; border-radius: 10px; padding: 16px 40px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 1rem; display: block; }
+.btn { background: #e50914; color: white; border: none; border-radius: 10px; padding: 16px 40px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 1rem; display: block; outline: none; }
+.btn:focus { background: #ff1a1a; border: 3px solid #fff; }
 </style>
 </head>
 <body>
 <h1>Streaming</h1>
 <p>Digite o endereco do servidor</p>
-<input id="ip" type="text" placeholder="192.168.1.100:80">
-<button class="btn" onclick="go()">Conectar</button>
+<input id="ip" type="text" placeholder="192.168.1.100:80" tabindex="1">
+<button class="btn" id="btn" onclick="go()" tabindex="2">Conectar</button>
 <script>
-var KEY_BACK = 10009;
+var KEY_BACK  = 10009;
 var KEY_ENTER = 13;
+var KEY_UP    = 38;
+var KEY_DOWN  = 40;
+
 var inp = document.getElementById("ip");
+var btn = document.getElementById("btn");
+
 var saved = "";
 try { saved = localStorage.getItem("sv") || ""; } catch(e) {}
-if (saved) { inp.value = saved; setTimeout(go, 800); } else { inp.focus(); }
+if (saved) {
+    inp.value = saved;
+    setTimeout(go, 800);
+} else {
+    inp.focus();
+}
+
 function go() {
     var v = inp.value.trim();
     if (!v) { inp.focus(); return; }
@@ -31,12 +43,36 @@ function go() {
     try { localStorage.setItem("sv", inp.value.trim()); } catch(e) {}
     window.location.href = v;
 }
+
+inp.addEventListener("keydown", function(e) {
+    var c = e.keyCode || e.which;
+    if (c === KEY_DOWN || c === KEY_ENTER) {
+        e.preventDefault();
+        if (c === KEY_ENTER) {
+            // ENTER no input: conecta direto
+            go();
+        } else {
+            // DOWN: move foco pro botao
+            btn.focus();
+        }
+    }
+});
+
+btn.addEventListener("keydown", function(e) {
+    var c = e.keyCode || e.which;
+    if (c === KEY_UP) { e.preventDefault(); inp.focus(); }
+    if (c === KEY_ENTER) { e.preventDefault(); go(); }
+    if (c === KEY_BACK) { e.preventDefault(); inp.focus(); }
+});
+
 document.addEventListener("keydown", function(e) {
     var c = e.keyCode || e.which;
-    if (c === KEY_ENTER) { go(); }
-    if (c === KEY_BACK) { try { localStorage.removeItem("sv"); } catch(e) {} inp.value = ""; inp.focus(); }
+    if (c === KEY_BACK && document.activeElement === inp) {
+        try { localStorage.removeItem("sv"); } catch(e) {}
+        inp.value = "";
+        inp.focus();
+    }
 });
-inp.addEventListener("keydown", function(e) { if ((e.keyCode || e.which) === KEY_ENTER) { go(); } });
 </script>
 </body>
 </html>
