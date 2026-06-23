@@ -17,40 +17,65 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
             text-align: center;
+            padding-bottom: 3rem;
         }
 
         h1 {
             font-size: 2.5rem;
-            margin-bottom: 3rem;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* ── LAYOUT PRINCIPAL ── */
+        .home-layout {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1100px;
+            padding: 0 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .home-nav {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            flex-shrink: 0;
+            width: 160px;
+            margin-right: 2rem;
+            position: sticky;
+            top: 1rem;
+        }
+
+        .home-content {
+            flex: 1;
+            min-width: 0;
         }
 
         .categories {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: -1rem;
+            flex-direction: column;
         }
 
         .card {
             background: #222;
             border-radius: 12px;
-            padding: 2.5rem 3rem;
+            padding: 1.5rem 1rem;
             text-decoration: none;
             color: white;
-            font-size: 1.4rem;
+            font-size: 1.1rem;
             font-weight: bold;
             transition: background 0.2s, transform 0.2s;
-            min-width: 180px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 1rem;
+            margin-bottom: 1rem;
         }
 
-        .card .icon { margin-bottom: 0.8rem; }
+        .card .icon { margin-bottom: 0.5rem; }
 
         .card:hover, .card:focus {
             background: #444;
@@ -61,14 +86,13 @@
         }
 
         .card .icon {
-            font-size: 3rem;
+            font-size: 2.2rem;
         }
 
         /* ── CONTINUAR ASSISTINDO ── */
         .continue-section {
             width: 100%;
-            max-width: 900px;
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
             text-align: left;
         }
 
@@ -335,74 +359,80 @@
 
 <h1>🍿Streaming</h1>
 
-<p style="color:#aaa; margin-bottom:2rem; font-size:0.95rem;">
+<p style="color:#aaa; margin-bottom:1rem; font-size:0.95rem;">
     Olá, <strong style="color:white">{{ profile.name }}</strong> —
     <a href="/profiles/exit" style="color:#aaa; text-decoration:underline;">Trocar perfil</a>
 </p>
 
-{% if in_progress %}
-<div class="continue-section">
-    <h2>Continuar assistindo</h2>
-    <div class="continue-list">
-        {% for item in in_progress %}
-        <div class="continue-card" id="card-{{ loop.index }}">
-            <button class="remove-btn" onclick="removeProgress(event, '{{ item.file_path | e }}', 'card-{{ loop.index }}', '{{ item.title | e }}')" title="Remover">✕</button>
-            <a class="card-link" href="/watch?path={{ item.encoded_path }}">
-                {% if item.poster_url %}
-                <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
-                {% else %}
-                <div class="continue-poster-placeholder">{% if item.type == 'series' %}🎬{% else %}🎥{% endif %}</div>
-                {% endif %}
-                <div class="continue-info">
-                    <div class="continue-title">{{ item.title }}</div>
-                    {% if item.subtitle %}
-                    <div class="continue-subtitle">{{ item.subtitle }}</div>
-                    {% endif %}
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ item.pct }}%"></div>
-                    </div>
-                    <div class="continue-pct">{{ item.pct }}% concluído</div>
-                </div>
+<div class="home-layout">
+    <nav class="home-nav">
+        <div class="categories">
+            <a class="card" href="/series-list">
+                <span class="icon">🎬</span>
+                Séries
+            </a>
+            <a class="card" href="/movies">
+                <span class="icon">🎥</span>
+                Filmes
             </a>
         </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
+    </nav>
 
-{% if watchlist %}
-<div class="continue-section" id="watchlist-section">
-    <h2>Assistir depois</h2>
-    <div class="continue-list">
-        {% for item in watchlist %}
-        <div class="continue-card" id="wl-card-{{ loop.index }}">
-            <button class="remove-btn" onclick="removeWatchlist(event, '{{ item.media_key | e }}', 'wl-card-{{ loop.index }}')" title="Remover">✕</button>
-            <a class="card-link" href="{{ item.link_url }}">
-                {% if item.poster_url and item.poster_url != 'None' %}
-                <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
-                {% else %}
-                <div class="continue-poster-placeholder">{% if item.media_type == 'tv' %}🎬{% else %}🎥{% endif %}</div>
-                {% endif %}
-                <div class="continue-info">
-                    <div class="continue-title">{{ item.title }}</div>
-                    <div class="continue-subtitle">{{ 'Série' if item.media_type == 'tv' else 'Filme' }}</div>
+    <div class="home-content">
+        {% if in_progress %}
+        <div class="continue-section">
+            <h2>Continuar assistindo</h2>
+            <div class="continue-list">
+                {% for item in in_progress %}
+                <div class="continue-card" id="card-{{ loop.index }}">
+                    <button class="remove-btn" onclick="removeProgress(event, '{{ item.file_path | e }}', 'card-{{ loop.index }}', '{{ item.title | e }}')" title="Remover">✕</button>
+                    <a class="card-link" href="/watch?path={{ item.encoded_path }}">
+                        {% if item.poster_url %}
+                        <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
+                        {% else %}
+                        <div class="continue-poster-placeholder">{% if item.type == 'series' %}🎬{% else %}🎥{% endif %}</div>
+                        {% endif %}
+                        <div class="continue-info">
+                            <div class="continue-title">{{ item.title }}</div>
+                            {% if item.subtitle %}
+                            <div class="continue-subtitle">{{ item.subtitle }}</div>
+                            {% endif %}
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: {{ item.pct }}%"></div>
+                            </div>
+                            <div class="continue-pct">{{ item.pct }}% concluído</div>
+                        </div>
+                    </a>
                 </div>
-            </a>
+                {% endfor %}
+            </div>
         </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
+        {% endif %}
 
-<div class="categories">
-    <a class="card" href="/series-list">
-        <span class="icon">🎬</span>
-        Séries
-    </a>
-    <a class="card" href="/movies">
-        <span class="icon">🎥</span>
-        Filmes
-    </a>
+        {% if watchlist %}
+        <div class="continue-section" id="watchlist-section">
+            <h2>Assistir depois</h2>
+            <div class="continue-list">
+                {% for item in watchlist %}
+                <div class="continue-card" id="wl-card-{{ loop.index }}">
+                    <button class="remove-btn" onclick="removeWatchlist(event, '{{ item.media_key | e }}', 'wl-card-{{ loop.index }}', '{{ item.title | e }}')" title="Remover">✕</button>
+                    <a class="card-link" href="{{ item.link_url }}">
+                        {% if item.poster_url and item.poster_url != 'None' %}
+                        <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
+                        {% else %}
+                        <div class="continue-poster-placeholder">{% if item.media_type == 'tv' %}🎬{% else %}🎥{% endif %}</div>
+                        {% endif %}
+                        <div class="continue-info">
+                            <div class="continue-title">{{ item.title }}</div>
+                            <div class="continue-subtitle">{{ 'Série' if item.media_type == 'tv' else 'Filme' }}</div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Botão flutuante sugestão -->
@@ -442,8 +472,16 @@ let _pendingRemove = null;
 function removeProgress(e, filePath, cardId, title) {
     e.preventDefault();
     e.stopPropagation();
-    _pendingRemove = { filePath, cardId };
+    _pendingRemove = { type: "progress", filePath, cardId };
     document.getElementById("removeModalMsg").textContent = `Remover "${title}" da lista?`;
+    document.getElementById("removeModal").classList.add("show");
+}
+
+function removeWatchlist(e, mediaKey, cardId, title) {
+    e.preventDefault();
+    e.stopPropagation();
+    _pendingRemove = { type: "watchlist", mediaKey, cardId };
+    document.getElementById("removeModalMsg").textContent = `Remover "${title}" de Assistir depois?`;
     document.getElementById("removeModal").classList.add("show");
 }
 
@@ -454,29 +492,26 @@ function closeRemoveModal() {
 
 document.getElementById("removeConfirmBtn").addEventListener("click", async () => {
     if (!_pendingRemove) return;
-    const { filePath, cardId } = _pendingRemove;
+    const pending = _pendingRemove;
     closeRemoveModal();
-    await fetch("/api/progress?" + new URLSearchParams({ path: filePath }), { method: "DELETE" });
-    const card = document.getElementById(cardId);
-    if (card) card.remove();
-    const list = document.querySelector(".continue-list");
-    if (list && !list.children.length) document.querySelector(".continue-section").remove();
+    if (pending.type === "progress") {
+        await fetch("/api/progress?" + new URLSearchParams({ path: pending.filePath }), { method: "DELETE" });
+        const card = document.getElementById(pending.cardId);
+        if (card) card.remove();
+        const list = document.querySelector(".continue-section:not(#watchlist-section) .continue-list");
+        if (list && !list.children.length) list.closest(".continue-section").remove();
+    } else {
+        await fetch("/api/watchlist?" + new URLSearchParams({ media_key: pending.mediaKey }), { method: "DELETE" });
+        const card = document.getElementById(pending.cardId);
+        if (card) card.remove();
+        const section = document.getElementById("watchlist-section");
+        if (section && !section.querySelector(".continue-card")) section.remove();
+    }
 });
 
 document.getElementById("removeModal").addEventListener("click", (e) => {
     if (e.target === e.currentTarget) closeRemoveModal();
 });
-
-// ── WATCHLIST ────────────────────────────────────────────────────────────────
-async function removeWatchlist(e, mediaKey, cardId) {
-    e.preventDefault();
-    e.stopPropagation();
-    await fetch("/api/watchlist?" + new URLSearchParams({ media_key: mediaKey }), { method: "DELETE" });
-    const card = document.getElementById(cardId);
-    if (card) card.remove();
-    const section = document.getElementById("watchlist-section");
-    if (section && !section.querySelector(".continue-card")) section.remove();
-}
 
 // ── SUGESTÃO ────────────────────────────────────────────────────────────────
 let _selectedSuggestion = null;
