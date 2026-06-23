@@ -19,5 +19,8 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
+# Banco de dados local
+*.db
+
 # Mídia (seus vídeos ficam locais, não vão pro GitHub)
 media/
