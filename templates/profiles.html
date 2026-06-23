@@ -56,11 +56,14 @@
             transition: border-color 0.15s, transform 0.15s, background 0.15s;
         }
 
-        .profile-btn:hover .avatar {
+        .profile-btn:hover .avatar,
+        .profile-btn:focus .avatar {
             border-color: white;
             background: #444;
             transform: scale(1.05);
         }
+
+        .profile-btn:focus { outline: none; }
 
         .name {
             color: #ddd;
@@ -86,5 +89,21 @@
     {% endfor %}
 </div>
 
+<script>
+(function() {
+    var btns = Array.prototype.slice.call(document.querySelectorAll(".profile-btn"));
+    btns.forEach(function(b) { b.setAttribute("tabindex", "0"); });
+    if (btns.length) btns[0].focus();
+
+    document.addEventListener("keydown", function(e) {
+        var c = e.keyCode || e.which;
+        var idx = btns.indexOf(document.activeElement);
+        if (idx === -1) { if (c === 39 || c === 37 || c === 40 || c === 38) { e.preventDefault(); btns[0].focus(); } return; }
+        if (c === 39 || c === 40) { e.preventDefault(); if (idx + 1 < btns.length) btns[idx + 1].focus(); }
+        else if (c === 37 || c === 38) { e.preventDefault(); if (idx - 1 >= 0) btns[idx - 1].focus(); }
+        else if (c === 13) { e.preventDefault(); btns[idx].closest("form").submit(); }
+    });
+})();
+</script>
 </body>
 </html>
