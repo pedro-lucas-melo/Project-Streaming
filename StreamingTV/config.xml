@@ -5,7 +5,7 @@
         version="1.0.0">
     <tizen:application id="PedroStr0.StreamingTV"
                        package="PedroStr0"
-                       required_version="5.0"/>
+                       required_version="2.4"/>
     <content src="index.html"/>
     <icon src="icon.png"/>
     <name>Streaming</name>
