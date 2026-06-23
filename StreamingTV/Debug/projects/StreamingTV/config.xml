@@ -4,8 +4,8 @@
         id="http://pedro.streaming/StreamingTV"
         version="1.0.0"
         viewmodes="maximized">
-    <tizen:application id="StreamTV.StreamingTV"
-                       package="StreamTV"
+    <tizen:application id="PedroStrmX.StreamingTV"
+                       package="PedroStrmX"
                        required_version="2.4"/>
     <content src="index.html"/>
     <icon src="icon.png"/>
