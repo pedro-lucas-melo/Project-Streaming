@@ -193,14 +193,14 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
         if (dir==="up" && active.classList.contains("card")) {
             var wb = active.querySelector(".wl-btn"); if (wb) { wb.focus(); return; }
         }
-        // Qualquer seta de .wl-btn: Down/Left/Right → card pai; Up → spatial nav acima
+        // wl-btn: Down/Left/Right → card pai; Up → card acima (busca a partir do card pai)
         if (active.classList.contains("wl-btn")) {
             if (dir!=="up") { var pc = active.closest(".card"); if (pc) { pc.focus(); return; } }
+            active = active.closest(".card") || active;
         }
-        var next = nearest(items, active, dir);
-        if (next && next.classList.contains("wl-btn")) {
-            var pc = next.closest(".card"); if (pc) next = pc;
-        }
+        // Busca espacial só entre cards/voltar (wl-btn excluído → sem pular títulos)
+        var navItems = items.filter(function(el){ return !el.classList.contains("wl-btn"); });
+        var next = nearest(navItems, active, dir);
         if (next) next.focus();
     });
     var all = getFocusable();

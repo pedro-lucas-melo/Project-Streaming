@@ -419,7 +419,7 @@
             <div class="continue-list">
                 {% for item in in_progress %}
                 <div class="continue-card" id="card-{{ loop.index }}">
-                    <button class="remove-btn" onclick="removeProgress(event, '{{ item.file_path | e }}', 'card-{{ loop.index }}', '{{ item.title | e }}')" title="Remover">✕</button>
+                    <button class="remove-btn" data-kind="progress" data-path="{{ item.file_path | e }}" data-card="card-{{ loop.index }}" data-title="{{ item.title | e }}" onclick="removeBtnClick(event, this)" title="Remover">✕</button>
                     <a class="card-link" href="/watch?path={{ item.encoded_path }}">
                         {% if item.poster_url %}
                         <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
@@ -449,7 +449,7 @@
             <div class="continue-list">
                 {% for item in watchlist %}
                 <div class="continue-card" id="wl-card-{{ loop.index }}">
-                    <button class="remove-btn" onclick="removeWatchlist(event, '{{ item.media_key | e }}', 'wl-card-{{ loop.index }}', '{{ item.title | e }}')" title="Remover">✕</button>
+                    <button class="remove-btn" data-kind="watchlist" data-mediakey="{{ item.media_key | e }}" data-card="wl-card-{{ loop.index }}" data-title="{{ item.title | e }}" onclick="removeBtnClick(event, this)" title="Remover">✕</button>
                     <a class="card-link" href="{{ item.link_url }}">
                         {% if item.poster_url and item.poster_url != 'None' %}
                         <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
@@ -503,19 +503,17 @@
 <script>
 let _pendingRemove = null;
 
-function removeProgress(e, filePath, cardId, title) {
+function removeBtnClick(e, btn) {
     e.preventDefault();
     e.stopPropagation();
-    _pendingRemove = { type: "progress", filePath, cardId };
-    document.getElementById("removeModalMsg").textContent = `Remover "${title}" da lista?`;
-    document.getElementById("removeModal").classList.add("show");
-}
-
-function removeWatchlist(e, mediaKey, cardId, title) {
-    e.preventDefault();
-    e.stopPropagation();
-    _pendingRemove = { type: "watchlist", mediaKey, cardId };
-    document.getElementById("removeModalMsg").textContent = `Remover "${title}" de Assistir depois?`;
+    var kind = btn.dataset.kind, title = btn.dataset.title, cardId = btn.dataset.card;
+    if (kind === "progress") {
+        _pendingRemove = { type: "progress", filePath: btn.dataset.path, cardId: cardId };
+        document.getElementById("removeModalMsg").textContent = `Remover "${title}" da lista?`;
+    } else {
+        _pendingRemove = { type: "watchlist", mediaKey: btn.dataset.mediakey, cardId: cardId };
+        document.getElementById("removeModalMsg").textContent = `Remover "${title}" de Assistir depois?`;
+    }
     document.getElementById("removeModal").classList.add("show");
 }
 
@@ -801,6 +799,12 @@ if (window.performance && window.performance.navigation && window.performance.na
         // remove-btn só é alvo direto se vier do seu próprio continue-card (via Up)
         if (next && next.classList.contains("remove-btn") && !active.classList.contains("continue-card")) {
             next = next.closest(".continue-card") || next;
+        }
+        // Down de continue-card sem outro card abaixo → Sugestão
+        if (dir==="down" && active.classList.contains("continue-card") &&
+            (!next || !next.classList.contains("continue-card"))) {
+            var fab = document.querySelector(".suggest-fab");
+            if (fab) { fab.focus(); return; }
         }
         if (next) next.focus();
     });
