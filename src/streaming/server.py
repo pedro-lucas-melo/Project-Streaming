@@ -11,6 +11,7 @@ from streaming.tmdb import fetch_metadata, search_suggestions
 import jinja2
 import aiohttp_jinja2
 import os
+import re
 import pathlib
 from urllib.parse import quote
 
@@ -35,10 +36,11 @@ class StreamingServer:
         )
 
     def _setup_routes(self):
-        self.app.router.add_get("/profiles", self.handle_profiles)
+        self.app.router.add_get("/", self.handle_profiles)
+        self.app.router.add_get("/profiles", self.handle_profiles_redirect)
         self.app.router.add_post("/profiles/select", self.handle_profile_select)
         self.app.router.add_get("/profiles/exit", self.handle_profile_exit)
-        self.app.router.add_get("/", self.handle_home)
+        self.app.router.add_get("/profile/{name}", self.handle_home)
         self.app.router.add_get("/series-list", self.handle_index)
         self.app.router.add_get("/video", self.handle_video)
         self.app.router.add_get("/watch", self.handle_watch)
@@ -69,6 +71,9 @@ class StreamingServer:
         except (ValueError, TypeError):
             return None
 
+    async def handle_profiles_redirect(self, request: web.Request):
+        raise web.HTTPFound("/")
+
     @aiohttp_jinja2.template("profiles.html")
     async def handle_profiles(self, request):
         profiles = await get_all_profiles()
@@ -83,12 +88,13 @@ class StreamingServer:
         profile = await get_profile(profile_id)
         if not profile:
             raise web.HTTPNotFound(reason="Perfil não encontrado")
-        response = web.HTTPFound("/")
+        name_slug = re.sub(r"[^a-z0-9]+", "-", profile["name"].lower()).strip("-")
+        response = web.HTTPFound(f"/profile/{name_slug}")
         response.set_cookie("profile_id", str(profile_id))
         raise response
 
     async def handle_profile_exit(self, request: web.Request):
-        response = web.HTTPFound("/profiles")
+        response = web.HTTPFound("/")
         response.del_cookie("profile_id")
         raise response
 
@@ -96,10 +102,10 @@ class StreamingServer:
     async def handle_home(self, request):
         profile_id = self._require_profile(request)
         if not profile_id:
-            raise web.HTTPFound("/profiles")
+            raise web.HTTPFound("/")
         profile = await get_profile(profile_id)
         if not profile:
-            raise web.HTTPFound("/profiles")
+            raise web.HTTPFound("/")
         in_progress = await get_in_progress(profile_id)
         series_base = os.path.abspath(self.config.media_series_dir).lower() if self.config.media_series_dir else ""
         enriched = []
