@@ -75,23 +75,24 @@
             position: absolute;
             top: 6px;
             right: 6px;
-            width: 28px;
-            height: 28px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.75);
+            background: rgba(30,130,30,0.45);
             border: none;
             color: white;
-            font-size: 18px;
-            line-height: 28px;
+            font-size: 20px;
+            line-height: 36px;
             text-align: center;
             cursor: pointer;
-            opacity: 0.5;
+            opacity: 0.75;
             transition: opacity 0.15s, box-shadow 0.15s;
             z-index: 10;
             padding: 0;
         }
-        .wl-btn:focus { opacity: 1; outline: none; box-shadow: 0 0 0 2px #4caf50; background: rgba(30,100,30,0.9); }
-        .wl-btn.in-wl { color: #4caf50; opacity: 0.8; }
+        .wl-btn:focus { opacity: 1; outline: none; box-shadow: 0 0 0 3px #4caf50; background: rgba(30,160,30,0.9); border-radius: 50%; }
+        .wl-btn.in-wl { background: rgba(30,130,30,0.5); color: white; opacity: 0.9; }
+        .wl-btn.in-wl:focus { box-shadow: 0 0 0 3px #4caf50; background: rgba(30,160,30,0.9); }
 
         .voltar {
             display: block;
