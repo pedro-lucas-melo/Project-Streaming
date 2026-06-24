@@ -152,11 +152,17 @@ class StreamingServer:
         watchlist = await get_watchlist(profile_id)
         return {"profile": profile, "in_progress": enriched, "watchlist": watchlist}
 
+    def _profile_slug(self, profile: dict | None) -> str:
+        if not profile:
+            return ""
+        return re.sub(r"[^a-z0-9]+", "-", profile["name"].lower()).strip("-")
+
     @aiohttp_jinja2.template("index.html")
     async def handle_index(self, request):
         if not self.series_library:
             raise web.HTTPNotFound(reason="Diretório de séries não configurado")
         profile_id = self._require_profile(request)
+        profile = await get_profile(profile_id) if profile_id else None
         wl_keys = await get_watchlist_keys(profile_id) if profile_id else set()
         structure = self.series_library.get_structure()
         series_names = sorted(structure.keys())
@@ -164,13 +170,14 @@ class StreamingServer:
         for name in series_names:
             meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
             series.append({"name": name, "poster_url": meta.get("poster_url"), "in_watchlist": name in wl_keys, "encoded_name": quote(name)})
-        return {"series": series}
+        return {"series": series, "profile_slug": self._profile_slug(profile)}
 
     @aiohttp_jinja2.template("movies.html")
     async def handle_movies(self, request):
         if not self.movies_library:
             raise web.HTTPNotFound(reason="Diretório de filmes não configurado")
         profile_id = self._require_profile(request)
+        profile = await get_profile(profile_id) if profile_id else None
         wl_keys = await get_watchlist_keys(profile_id) if profile_id else set()
         videos = self.movies_library.list_videos()
         movies_raw = sorted(
@@ -187,7 +194,7 @@ class StreamingServer:
         for m in movies_raw:
             meta = await fetch_metadata(self.config.tmdb_token, m["name"], "movie")
             movies.append({**m, "poster_url": meta.get("poster_url"), "in_watchlist": m["name"] in wl_keys, "encoded_path": quote(m["path"])})
-        return {"movies": movies}
+        return {"movies": movies, "profile_slug": self._profile_slug(profile)}
 
     @aiohttp_jinja2.template("series.html")
     async def handle_series(self, request):
