@@ -223,6 +223,9 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
             if (dir!=="up") { var pc = active.closest(".card"); if (pc) { pc.focus(); return; } }
         }
         var next = nearest(items, active, dir);
+        if (next && next.classList.contains("wl-btn")) {
+            var pc = next.closest(".card"); if (pc) next = pc;
+        }
         if (next) next.focus();
     });
     var all = getFocusable();

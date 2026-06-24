@@ -320,6 +320,7 @@
         if (Math.floor(video.currentTime) % 5 === 0) {
             fetch("/api/progress", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ path: FILE_PATH, position: video.currentTime, duration: video.duration }),
             });
@@ -356,6 +357,7 @@
     video.addEventListener("ended", () => {
         fetch("/api/progress", {
             method: "POST",
+            credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ path: FILE_PATH, position: 0, duration: video.duration }),
         });
