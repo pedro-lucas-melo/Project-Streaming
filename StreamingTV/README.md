@@ -10,8 +10,8 @@ Este é o app instalável para Samsung Smart TV (Tizen OS, modelos 2017+).
 - Descobrir o **IP do PC** no servidor: `ipconfig` → IPv4 da rede local (ex: 192.168.1.100)
 
 ### Passo 1: Ativar Modo Desenvolvedor na TV
-1. Na TV, vá em **Configurações → Suporte → Sobre esta TV**
-2. Pressione rápido: `▲ ▲ ▼ ▼ ◄ ► ◄ ►` (código Konami) — abre tela de Dev Mode
+1. Na TV, abra **Smart Hub → Apps**
+2. No teclado numérico do controle, digite **12345** — abre a tela de Dev Mode
 3. Ligue **Developer Mode** e insira o **IP do PC**
 4. Reinicie a TV quando solicitado
 
