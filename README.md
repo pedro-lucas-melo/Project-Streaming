@@ -1,18 +1,24 @@
 # 🎬 Project-Streaming
 
 Servidor de streaming de vídeo local, leve e assíncrono, construído com **Python** e **aiohttp**.
-Serve arquivos MP4/MKV com suporte completo a HTTP Range Requests — permitindo seek, pausa e retomada no player.
+Serve arquivos MP4/MKV com suporte completo a HTTP Range Requests — seek, pausa e retomada no player.
+Inclui app instalável para **Samsung Smart TV (Tizen)**.
 
 ---
 
 ## ✨ Funcionalidades
 
 - ⚡ Streaming assíncrono com suporte a **Range Requests** (seek sem rebuffering)
+- 👤 **Múltiplos perfis** — cada usuário tem seu histórico e watchlist independente
+- 📺 **Continue assistindo** — retoma de onde parou, com barra de progresso
 - 🎥 **Biblioteca de séries** com navegação por série → temporada → episódio
 - 🎞️ **Biblioteca de filmes** com rota dedicada
+- 🖼️ **Integração TMDB** — pôsteres e metadados automáticos para séries e filmes
+- 📋 **Watchlist** — salve títulos para assistir depois
+- 💡 **Sugestões via Telegram** — envie sugestões de filmes/séries para um bot Telegram
 - 🖥️ Interface web com templates **Jinja2** (dark mode)
 - ▶️ Player HTML5 com controles customizados (seek ±10s, teclas de atalho)
-- 🏠 Página inicial com navegação entre seções
+- 📱 **App Tizen** — instalável em Samsung Smart TV sem loja de apps
 
 ---
 
@@ -24,6 +30,7 @@ Serve arquivos MP4/MKV com suporte completo a HTTP Range Requests — permitindo
 | aiohttp | 3.9+ | Servidor web assíncrono |
 | aiohttp-jinja2 | 1.6+ | Templates |
 | Jinja2 | 3.1+ | Renderização HTML |
+| aiosqlite | 0.22+ | Banco de dados (perfis, progresso, watchlist) |
 | python-dotenv | 1.0+ | Configuração por `.env` |
 | ffmpeg | — | Conversão de mídia (script separado) |
 
@@ -36,14 +43,18 @@ streaming-server/
 ├── src/streaming/
 │   ├── server.py        # Servidor principal, rotas
 │   ├── media.py         # Biblioteca de mídia (scan de diretórios)
+│   ├── database.py      # SQLite: perfis, progresso, watchlist
+│   ├── tmdb.py          # Integração com a API do TMDB
 │   └── config.py        # Configurações via .env
 ├── templates/
-│   ├── home.html        # Página inicial
+│   ├── profiles.html    # Seleção de perfil
+│   ├── home.html        # Página inicial (continue assistindo + watchlist)
 │   ├── index.html       # Lista de séries
 │   ├── series.html      # Temporadas de uma série
 │   ├── season.html      # Episódios de uma temporada
 │   ├── movies.html      # Lista de filmes
 │   └── player.html      # Player de vídeo
+├── StreamingTV/         # App Tizen para Samsung Smart TV
 ├── scripts/
 │   └── convert.py       # Conversor ffmpeg interativo
 ├── tests/
@@ -89,6 +100,14 @@ MEDIA_MOVIES_DIR=C:\Users\SeuUsuario\Videos\filmes
 # Host e porta (padrão: acessível em toda a rede local)
 HOST=0.0.0.0
 PORT=8080
+
+# Token de leitura da API do TMDB (para pôsteres e metadados)
+# Crie em: https://www.themoviedb.org/settings/api
+TMDB_API_READ_TOKEN=
+
+# Bot do Telegram para receber sugestões de filmes/séries (opcional)
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
 ```
 
 ### Estrutura de diretórios esperada
@@ -105,7 +124,7 @@ Videos/
 │       └── Temporada 1/
 └── filmes/
     ├── Inception.mp4
-    └── Interestellar.mp4
+    └── Interstellar.mp4
 ```
 
 ---
@@ -123,6 +142,25 @@ poetry run python -m streaming.server
 Acesse em: **http://localhost:8080**
 
 Na rede local (TV, celular): **http://[SEU-IP]:8080**
+
+---
+
+## 👤 Perfis
+
+Na primeira tela, selecione um perfil. Cada perfil tem:
+- Histórico de progresso independente (retoma de onde parou)
+- Watchlist própria
+- O banco de dados (`streaming.db`) é criado automaticamente na primeira execução
+
+Para adicionar ou remover perfis, edite diretamente a tabela `profiles` em `streaming.db` ou modifique `_SEED` em `database.py`.
+
+---
+
+## 📺 App Samsung Smart TV (Tizen)
+
+O diretório `StreamingTV/` contém um app web instalável em TVs Samsung (Tizen OS, modelos 2017+) **sem precisar da loja de apps**.
+
+Veja as instruções completas em [StreamingTV/README.md](StreamingTV/README.md).
 
 ---
 
