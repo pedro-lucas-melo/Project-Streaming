@@ -67,6 +67,27 @@ class MediaLibrary:
     def invalidate_cache(self):
         self._structure_cache = None
 
+    def get_next_episode(self, path: str) -> str | None:
+        """Próximo episódio após `path`: o próximo na mesma temporada; se for o
+        último, o primeiro episódio da próxima temporada. None se for o último
+        episódio da série. Ordenação igual à exibida na UI (sorted por nome)."""
+        target = os.path.normcase(os.path.normpath(path))
+        structure = self.get_structure()
+        for series, seasons in structure.items():
+            season_names = sorted(seasons.keys())
+            for si, season in enumerate(season_names):
+                eps = sorted(seasons[season], key=lambda x: x["name"])
+                for ei, ep in enumerate(eps):
+                    if os.path.normcase(os.path.normpath(ep["path"])) == target:
+                        if ei + 1 < len(eps):
+                            return eps[ei + 1]["path"]
+                        for next_season in season_names[si + 1:]:
+                            next_eps = sorted(seasons[next_season], key=lambda x: x["name"])
+                            if next_eps:
+                                return next_eps[0]["path"]
+                        return None
+        return None
+
     @staticmethod
     def get_series_library(series_dir: str) -> "MediaLibrary":
         return MediaLibrary(series_dir)

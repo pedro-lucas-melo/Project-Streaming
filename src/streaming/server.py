@@ -109,6 +109,7 @@ class StreamingServer:
         in_progress = await get_in_progress(profile_id)
         series_base = os.path.abspath(self.config.media_series_dir).lower() if self.config.media_series_dir else ""
         enriched = []
+        seen_series: set[str] = set()  # 1 card por série (episódio mais recente), nunca duplica
         for item in in_progress:
             fp = item["file_path"]
             abs_fp = os.path.abspath(fp).lower()
@@ -124,6 +125,10 @@ class StreamingServer:
                 else:
                     series_name = pathlib.Path(fp).stem
                     episode_name = None
+                # in_progress vem ordenado por updated_at DESC → 1ª ocorrência = mais recente
+                if series_name in seen_series:
+                    continue
+                seen_series.add(series_name)
                 meta = await fetch_metadata(self.config.tmdb_token, series_name, "tv")
                 enriched.append({
                     "type": "series",
@@ -241,6 +246,10 @@ class StreamingServer:
         current_rating = await get_rating(profile_id, media_key) if profile_id else None
         progress = await get_progress(profile_id, path) if profile_id else None
         resume_position = progress["position"] if progress and progress.get("position") else 0
+        # Próximo episódio (só séries) — usado para auto-avanço ao terminar.
+        next_path = None
+        if media_type == "tv" and self.series_library:
+            next_path = self.series_library.get_next_episode(path)
         return {
             "path": path,
             "encoded_path": quote(path),
@@ -248,6 +257,7 @@ class StreamingServer:
             "media_type": media_type,
             "current_rating": current_rating or "",
             "resume_position": resume_position,
+            "next_encoded_path": quote(next_path) if next_path else "",
         }
 
     async def handle_video(self, request):

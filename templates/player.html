@@ -353,15 +353,31 @@
         }
     });
 
-    // Marca como concluído ao terminar (zera posição)
-    video.addEventListener("ended", () => {
-        fetch("/api/progress", {
-            method: "POST",
-            credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: FILE_PATH, position: 0, duration: video.duration }),
-        });
-    });
+    // ── AO TERMINAR ──────────────────────────────────────────────────────────
+    // NEXT_PATH já vem URL-encoded do servidor (vazio p/ filmes e fim de série).
+    const NEXT_PATH = "{{ next_encoded_path }}";
+    let _advancing = false;
+
+    async function onEnded() {
+        if (_advancing) return;
+        _advancing = true;
+        // Remove o título/episódio atual do "Continuar assistindo".
+        // Séries: o próximo episódio se registra sozinho ao tocar → atualiza o
+        // card (remove o atual, adiciona o próximo) sem nunca duplicar.
+        try {
+            await fetch("/api/progress?" + new URLSearchParams({ path: FILE_PATH }), {
+                method: "DELETE",
+                credentials: "same-origin",
+            });
+        } catch (e) { /* segue mesmo sem rede */ }
+
+        if (NEXT_PATH) {
+            showOverlay("▶ Próximo episódio…");
+            window.location.replace("/watch?path=" + NEXT_PATH);
+        }
+    }
+
+    video.addEventListener("ended", onEnded);
 
     // ── MUDO ────────────────────────────────────────────────────────────────
     function toggleMute() {

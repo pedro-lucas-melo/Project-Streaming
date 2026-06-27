@@ -170,29 +170,13 @@ async function toggleWatchlist(btn) {
 }
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.js");
+</script>
+<script src="/static/tv-nav.js"></script>
+<script>
 (function() {
     function getFocusable() {
         return Array.prototype.slice.call(document.querySelectorAll('.card, .wl-btn, .voltar'))
             .filter(function(el) { return el.offsetParent !== null; });
-    }
-    function nearest(items, cur, dir) {
-        var cr = cur.getBoundingClientRect();
-        var best = null, bestScore = Infinity;
-        items.forEach(function(el) {
-            if (el === cur) return;
-            var r = el.getBoundingClientRect();
-            var ok = dir==="down"  ? r.top    >= cr.bottom - 5 :
-                     dir==="up"    ? r.bottom <= cr.top    + 5 :
-                     dir==="right" ? r.left   >= cr.right  - 5 :
-                                     r.right  <= cr.left   + 5;
-            if (!ok) return;
-            var cx = r.left+r.width/2, cy = r.top+r.height/2;
-            var mx = cr.left+cr.width/2, my = cr.top+cr.height/2;
-            var primary = dir==="down"?r.top-cr.bottom:dir==="up"?cr.top-r.bottom:dir==="right"?r.left-cr.right:cr.left-r.right;
-            var score = primary + ((dir==="down"||dir==="up")?Math.abs(cx-mx):Math.abs(cy-my))*0.5;
-            if (score < bestScore) { bestScore = score; best = el; }
-        });
-        return best;
     }
     function activate(el) {
         if (el.tagName==="BUTTON") { el.click(); return; }
@@ -223,9 +207,9 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
             if (dir!=="up") { var pc = active.closest(".card"); if (pc) { pc.focus(); return; } }
             active = active.closest(".card") || active;
         }
-        // Busca espacial só entre cards/voltar (wl-btn excluído → sem pular títulos)
+        // Navegação só entre cards/voltar (wl-btn excluído → sem pular títulos)
         var navItems = items.filter(function(el){ return !el.classList.contains("wl-btn"); });
-        var next = nearest(navItems, active, dir);
+        var next = tvNavMove(navItems, active, dir);
         if (next) next.focus();
     });
     var all = getFocusable();
