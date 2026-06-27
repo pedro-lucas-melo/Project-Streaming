@@ -465,21 +465,32 @@ class StreamingServer:
         return web.json_response(progress)
 
     def run(self):
-        import asyncio, logging
-        # Suprime o WinError 10054 (cliente fecha conexão abruptamente — inofensivo no Windows)
+        # ProactorEventLoop (default no Windows) — estável p/ streaming.
+        # NÃO trocar por SelectorEventLoop: tem bug "_write_send assert" + WinError 10038 em writes de socket.
         def _silence_noise(loop, context):
             exc = context.get("exception")
             if isinstance(exc, (ConnectionResetError, asyncio.InvalidStateError)):
                 return
             loop.default_exception_handler(context)
 
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         loop.set_exception_handler(_silence_noise)
+
+        # AppRunner manual em vez de web.run_app: shutdown limpo no Ctrl+C, sem
+        # o cancel de tasks que gerava o spam de InvalidStateError.
+        runner = web.AppRunner(self.app)
+        loop.run_until_complete(runner.setup())
+        site = web.TCPSite(runner, self.config.host, self.config.port)
+        loop.run_until_complete(site.start())
+        print(f"Servidor em http://{self.config.host}:{self.config.port}  (Ctrl+C para sair)")
         try:
-            web.run_app(self.app, host=self.config.host, port=self.config.port, loop=loop)
+            loop.run_forever()
         except KeyboardInterrupt:
             pass
+        finally:
+            loop.run_until_complete(runner.cleanup())
+            loop.close()
 
 
 def main():
