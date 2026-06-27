@@ -8,6 +8,7 @@ from streaming.database import (
     add_to_watchlist, remove_from_watchlist, get_watchlist, get_watchlist_keys,
 )
 from streaming.tmdb import fetch_metadata, search_suggestions
+import asyncio
 import jinja2
 import aiohttp_jinja2
 import os
@@ -323,8 +324,8 @@ class StreamingServer:
                         await response.write(data)
                         remaining -= len(data)
                 await response.write_eof()
-            except ConnectionError:
-                pass  # cliente fechou conexão (seek, pause, tab fechada) — comportamento normal
+            except (ConnectionError, asyncio.CancelledError):
+                pass  # cliente fechou conexão ou server shutdown
             return response
 
         return web.FileResponse(path=file_path, headers={"Content-Type": content_type})
@@ -466,14 +467,15 @@ class StreamingServer:
     def run(self):
         import asyncio, logging
         # Suprime o WinError 10054 (cliente fecha conexão abruptamente — inofensivo no Windows)
-        def _silence_connection_reset(loop, context):
+        def _silence_noise(loop, context):
             exc = context.get("exception")
-            if isinstance(exc, ConnectionResetError):
+            if isinstance(exc, (ConnectionResetError, asyncio.InvalidStateError)):
                 return
             loop.default_exception_handler(context)
 
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         loop = asyncio.new_event_loop()
-        loop.set_exception_handler(_silence_connection_reset)
+        loop.set_exception_handler(_silence_noise)
         try:
             web.run_app(self.app, host=self.config.host, port=self.config.port, loop=loop)
         except KeyboardInterrupt:
