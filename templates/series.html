@@ -67,10 +67,15 @@
 </div>
 
 <br>
-<a class="voltar" href="/">← Voltar</a>
+<a class="voltar" href="/series-list" onclick="event.preventDefault();goBack();">← Voltar</a>
 
 <script src="/static/tv-nav.js"></script>
 <script>
+// Voltar = página anterior (history.back). Fallback p/ catálogo se não há histórico.
+function goBack() {
+    if (history.length > 1) history.back();
+    else window.location.href = "/series-list";
+}
 (function() {
     function getFocusable() {
         return Array.prototype.slice.call(document.querySelectorAll('.card, .voltar'))
@@ -82,7 +87,7 @@
 
     document.addEventListener("keydown", function(e) {
         var kc = e.keyCode || e.which;
-        if (kc===10009||e.key==="XF86Back") { e.preventDefault(); window.location.href="/series-list"; return; }
+        if (kc===10009||e.key==="XF86Back") { e.preventDefault(); goBack(); return; }
         var items = getFocusable(), active = document.activeElement;
         if (items.indexOf(active) === -1) { if (kc===37||kc===38||kc===39||kc===40) { e.preventDefault(); items[0]&&items[0].focus(); } return; }
         if (kc===13||e.key==="Enter") {

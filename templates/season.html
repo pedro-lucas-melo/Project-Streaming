@@ -77,12 +77,17 @@
 </div>
 
 <br>
-<a class="voltar" href="/series?name={{ series }}">← Voltar</a>
+<a class="voltar" href="/series?name={{ series }}" onclick="event.preventDefault();goBack();">← Voltar</a>
 
 <script src="/static/tv-nav.js"></script>
 <script>
 function openEpisode(el) {
     window.location.href = "/watch?path=" + encodeURIComponent(el.dataset.path);
+}
+// Voltar = página anterior (history.back). Fallback p/ lista de temporadas.
+function goBack() {
+    if (history.length > 1) history.back();
+    else window.location.href = "/series?name={{ series | e }}";
 }
 (function() {
     function getFocusable() {
@@ -95,7 +100,7 @@ function openEpisode(el) {
 
     document.addEventListener("keydown", function(e) {
         var kc = e.keyCode || e.which;
-        if (kc===10009||e.key==="XF86Back") { e.preventDefault(); window.location.href="/series?name={{ series | e }}"; return; }
+        if (kc===10009||e.key==="XF86Back") { e.preventDefault(); goBack(); return; }
         var items = getFocusable(), active = document.activeElement;
         if (items.indexOf(active) === -1) { if (kc===37||kc===38||kc===39||kc===40) { e.preventDefault(); items[0]&&items[0].focus(); } return; }
         if (kc===13||e.key==="Enter") {

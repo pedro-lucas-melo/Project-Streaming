@@ -304,6 +304,7 @@
     // ── SEEK ────────────────────────────────────────────────────────────────
     function seek(seconds) {
         if (!video.duration) return;
+        _resumeDone = true;  // usuário assumiu o controle — não restaurar mais a posição salva
         video.currentTime = Math.max(0, Math.min(video.currentTime + seconds, video.duration));
         showOverlay(seconds > 0 ? `+${seconds}s` : `${seconds}s`);
     }
@@ -329,6 +330,7 @@
 
     progressWrapper.addEventListener("click", (e) => {
         if (!video.duration) return;
+        _resumeDone = true;  // usuário buscou na barra — não restaurar mais a posição salva
         const rect = progressWrapper.getBoundingClientRect();
         const pct  = (e.clientX - rect.left) / rect.width;
         video.currentTime = pct * video.duration;
@@ -338,18 +340,26 @@
     // ── RETOMAR PROGRESSO ───────────────────────────────────────────────────
     // Posição renderizada pelo servidor — sem async fetch, sem race condition na TV.
     var _resumePosition = parseFloat(video.dataset.resume || "0");
+    // Restaura a posição salva UMA vez. Depois que chega lá (ou o usuário busca),
+    // marca como concluído — senão o canplay disparado pelo próprio seek puxava
+    // currentTime de volta pra posição salva, travando qualquer avanço/retrocesso.
+    var _resumeDone = !(_resumePosition > 5);
 
     video.addEventListener("loadedmetadata", function() {
-        if (_resumePosition > 5 && _resumePosition < video.duration - 30) {
+        if (!_resumeDone && _resumePosition < video.duration - 30) {
             video.currentTime = _resumePosition;
             showOverlay("▶ Retomando…");
         }
     });
 
     // TV/dispositivos lentos: seek pode ser ignorado antes de buffering suficiente.
+    // Reaplica só até confirmar que chegou; aí encerra (não luta com seeks do usuário).
     video.addEventListener("canplay", function() {
-        if (_resumePosition > 5 && Math.abs(video.currentTime - _resumePosition) > 3) {
+        if (_resumeDone) return;
+        if (Math.abs(video.currentTime - _resumePosition) > 3) {
             video.currentTime = _resumePosition;
+        } else {
+            _resumeDone = true;
         }
     });
 
