@@ -559,7 +559,10 @@ function closeSuggestModal() {
     document.getElementById("suggestResults").innerHTML = "";
     document.getElementById("suggestStatus").textContent = "";
     document.getElementById("suggestInput").value = "";
-    document.getElementById("suggestSendBtn").style.display = "none";
+    const sendBtn = document.getElementById("suggestSendBtn");
+    sendBtn.style.display = "none";
+    sendBtn.disabled = false;
+    sendBtn.textContent = "Enviar pelo WhatsApp";
     _selectedSuggestion = null;
 }
 document.getElementById("suggestModal").addEventListener("click", (e) => {
