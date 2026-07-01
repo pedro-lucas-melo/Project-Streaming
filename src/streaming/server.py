@@ -504,8 +504,14 @@ class StreamingServer:
         except KeyboardInterrupt:
             pass
         finally:
-            loop.run_until_complete(runner.cleanup())
+            # Protege também a limpeza: um Ctrl+C durante o cleanup (comum) não
+            # deve vazar traceback do asyncio para o terminal.
+            try:
+                loop.run_until_complete(runner.cleanup())
+            except KeyboardInterrupt:
+                pass
             loop.close()
+            print("\nServidor encerrado.")
 
 
 def main():
