@@ -282,18 +282,23 @@
     }
 
     // ── CONTROLES ───────────────────────────────────────────────────────────
+    function hideControls() {
+        if (video.paused) return;   // pausado: mantém tudo visível
+        controls.classList.remove("show");
+        titleBar.classList.remove("show");
+        document.body.classList.add("hide-cursor");
+    }
+
     function showControls() {
         controls.classList.add("show");
         titleBar.classList.add("show");
         document.body.classList.remove("hide-cursor");
         clearTimeout(controlsTimer);
-        controlsTimer = setTimeout(() => {
-            if (!video.paused) {
-                controls.classList.remove("show");
-                titleBar.classList.remove("show");
-                document.body.classList.add("hide-cursor");
-            }
-        }, 3000);
+        // Só agenda o auto-ocultar durante a reprodução. Pausado fica sempre
+        // visível (nenhum timer pendente para escondê-lo depois).
+        if (!video.paused) {
+            controlsTimer = setTimeout(hideControls, 3000);
+        }
     }
 
     // Auto-fullscreen ao iniciar
