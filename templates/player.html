@@ -53,6 +53,26 @@
 
         .overlay.show { opacity: 1; }
 
+        /* ── TÍTULO (topo) ── */
+        .title-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 22px 28px;
+            background: linear-gradient(rgba(0,0,0,0.7), transparent);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            z-index: 25;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        .title-bar.show { opacity: 1; }
+
         /* ── BARRA DE CONTROLES ── */
         .controls {
             position: absolute;
@@ -126,7 +146,7 @@
 
         .time-display {
             color: rgba(255,255,255,0.85);
-            font-size: 13px;
+            font-size: 18px;
             margin-left: auto;
             white-space: nowrap;
         }
@@ -202,6 +222,7 @@
 
     <div class="spinner" id="spinner"></div>
     <div class="overlay" id="overlay"></div>
+    <div class="title-bar" id="titleBar">{{ display_title }}</div>
 
     <!-- AVALIAÇÃO DESABILITADA — remover comentário para reativar
     <div class="rating-panel" id="ratingPanel">
@@ -247,6 +268,7 @@
     const muteBtn         = document.getElementById("muteBtn");
     const timeDisplay     = document.getElementById("timeDisplay");
     const spinner         = document.getElementById("spinner");
+    const titleBar        = document.getElementById("titleBar");
 
     let overlayTimer;
     let controlsTimer;
@@ -262,11 +284,13 @@
     // ── CONTROLES ───────────────────────────────────────────────────────────
     function showControls() {
         controls.classList.add("show");
+        titleBar.classList.add("show");
         document.body.classList.remove("hide-cursor");
         clearTimeout(controlsTimer);
         controlsTimer = setTimeout(() => {
             if (!video.paused) {
                 controls.classList.remove("show");
+                titleBar.classList.remove("show");
                 document.body.classList.add("hide-cursor");
             }
         }, 3000);

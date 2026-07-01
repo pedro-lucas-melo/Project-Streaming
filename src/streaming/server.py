@@ -228,6 +228,16 @@ class StreamingServer:
         )
         return {"series": series_name, "season": season_name, "episodes": episodes}
 
+    @staticmethod
+    def _strip_media_ext(filename: str) -> str:
+        # Remove só a extensão real do fim (.mp4/.mkv), preservando extensões
+        # "artísticas" que fazem parte do nome (ex.: Mr Robot "hellofriend.mov",
+        # "da3m0ns.mp4"). Mesma lógica da listagem em MediaLibrary.get_structure.
+        for ext in MediaLibrary.SUPPORTED_EXTENSIONS:
+            if filename.lower().endswith(ext):
+                return filename[: -len(ext)]
+        return filename
+
     @aiohttp_jinja2.template("player.html")
     async def handle_watch(self, request):
         path = request.query.get("path")
@@ -241,9 +251,13 @@ class StreamingServer:
             series_idx = next((i for i, p in enumerate(parts) if p.lower() == pathlib.Path(self.config.media_series_dir).name.lower()), None)
             media_key = parts[series_idx + 1] if series_idx is not None and len(parts) > series_idx + 1 else pathlib.Path(path).stem
             media_type = "tv"
+            season = parts[series_idx + 2] if series_idx is not None and len(parts) > series_idx + 2 else ""
+            episode_name = self._strip_media_ext(pathlib.Path(path).name)
+            display_title = " / ".join(x for x in [media_key, season, episode_name] if x)
         else:
             media_key = pathlib.Path(path).stem
             media_type = "movie"
+            display_title = media_key
         current_rating = await get_rating(profile_id, media_key) if profile_id else None
         progress = await get_progress(profile_id, path) if profile_id else None
         resume_position = progress["position"] if progress and progress.get("position") else 0
@@ -259,6 +273,7 @@ class StreamingServer:
             "current_rating": current_rating or "",
             "resume_position": resume_position,
             "next_encoded_path": quote(next_path) if next_path else "",
+            "display_title": display_title,
         }
 
     async def handle_video(self, request):
