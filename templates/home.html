@@ -113,6 +113,12 @@
             flex-wrap: wrap;
         }
 
+        .continue-empty {
+            color: #666;
+            font-size: 1rem;
+            padding: 0.5rem 0 1rem;
+        }
+
         .continue-list .continue-card {
             margin: 0 1rem 1rem 0;
         }
@@ -413,9 +419,9 @@
     </nav>
 
     <div class="home-content">
-        {% if in_progress %}
-        <div class="continue-section">
+        <div class="continue-section" id="progress-section">
             <h2>Continuar assistindo</h2>
+            <div class="continue-empty"{% if in_progress %} style="display:none"{% endif %}>Nada por aqui ainda.</div>
             <div class="continue-list">
                 {% for item in in_progress %}
                 <div class="continue-card" id="card-{{ loop.index }}">
@@ -441,11 +447,10 @@
                 {% endfor %}
             </div>
         </div>
-        {% endif %}
 
-        {% if watchlist %}
         <div class="continue-section" id="watchlist-section">
             <h2>Assistir depois</h2>
+            <div class="continue-empty"{% if watchlist %} style="display:none"{% endif %}>Nada por aqui ainda.</div>
             <div class="continue-list">
                 {% for item in watchlist %}
                 <div class="continue-card" id="wl-card-{{ loop.index }}">
@@ -465,7 +470,6 @@
                 {% endfor %}
             </div>
         </div>
-        {% endif %}
     </div>
 </div>
 
@@ -531,15 +535,16 @@ document.getElementById("removeConfirmBtn").addEventListener("click", async () =
         if (!res.ok) { alert("Erro ao remover (" + res.status + ")"); return; }
         const card = document.getElementById(pending.cardId);
         if (card) card.remove();
-        const list = document.querySelector(".continue-section:not(#watchlist-section) .continue-list");
-        if (list && !list.children.length) list.closest(".continue-section").remove();
+        const section = document.getElementById("progress-section");
+        const list = section && section.querySelector(".continue-list");
+        if (list && !list.children.length) section.querySelector(".continue-empty").style.display = "";
     } else {
         const res = await fetch("/api/watchlist?" + new URLSearchParams({ media_key: pending.mediaKey }), { method: "DELETE", credentials: "same-origin" });
         if (!res.ok) { alert("Erro ao remover (" + res.status + ")"); return; }
         const card = document.getElementById(pending.cardId);
         if (card) card.remove();
         const section = document.getElementById("watchlist-section");
-        if (section && !section.querySelector(".continue-card")) section.remove();
+        if (section && !section.querySelector(".continue-card")) section.querySelector(".continue-empty").style.display = "";
     }
 });
 

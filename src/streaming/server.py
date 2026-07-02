@@ -130,11 +130,19 @@ class StreamingServer:
                 if series_name in seen_series:
                     continue
                 seen_series.add(series_name)
+                # Prefixa temporada: "T4 - E02 - Nome" (pasta pai = "Temporada N")
+                subtitle = episode_name
+                if episode_name:
+                    season_folder = pathlib.Path(fp).parent.name
+                    if season_folder != series_name:
+                        m = re.search(r"\d+", season_folder)
+                        if m:
+                            subtitle = f"T{m.group()} - {episode_name}"
                 meta = await fetch_metadata(self.config.tmdb_token, series_name, "tv")
                 enriched.append({
                     "type": "series",
                     "title": series_name,
-                    "subtitle": episode_name,
+                    "subtitle": subtitle,
                     "poster_url": meta.get("poster_url"),
                     "pct": pct,
                     "encoded_path": encoded_path,
