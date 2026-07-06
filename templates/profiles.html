@@ -101,8 +101,11 @@
     var btns = Array.prototype.slice.call(document.querySelectorAll(".profile-btn"));
     btns.forEach(function(b) { b.setAttribute("tabindex", "0"); });
 
-    // Fonte máxima que preenche o retângulo: começa grande e encolhe até caber
-    Array.prototype.forEach.call(document.querySelectorAll(".avatar .name"), function(n) {
+    // Fonte máxima que cabe em todos os retângulos: mede cada nome e aplica
+    // o menor tamanho em todos, pra ficarem uniformes
+    var names = Array.prototype.slice.call(document.querySelectorAll(".avatar .name"));
+    var common = 60;
+    names.forEach(function(n) {
         var avatar = n.parentNode;
         var maxW = avatar.clientWidth - 16;
         var maxH = avatar.clientHeight - 10;
@@ -112,7 +115,9 @@
             size -= 2;
             n.style.fontSize = size + "px";
         }
+        if (size < common) common = size;
     });
+    names.forEach(function(n) { n.style.fontSize = common + "px"; });
 
     if (btns.length) btns[0].focus();
 
