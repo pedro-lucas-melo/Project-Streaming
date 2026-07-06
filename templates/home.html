@@ -10,6 +10,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        /* Página estática: nada de scroll no body (TV). Só .home-content rola. */
+        html, body { height: 100%; }
+
         body {
             background: #111;
             color: white;
@@ -17,9 +20,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
             text-align: center;
-            padding-bottom: 3rem;
         }
 
         h1 {
@@ -36,6 +39,9 @@
             width: 100%;
             padding: 0 2rem;
             margin-top: 1.5rem;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .home-nav {
@@ -45,14 +51,18 @@
             flex-shrink: 0;
             width: 220px;
             margin-right: 2.5rem;
-            position: sticky;
-            top: 1rem;
         }
 
         .home-content {
             flex: 1;
             min-width: 0;
+            height: 100%;
+            overflow-y: auto;
+            padding-bottom: 3rem;
         }
+
+        /* Esconde barra de rolagem (webkit = webview da TV) */
+        .home-content::-webkit-scrollbar { display: none; }
 
         .categories {
             display: flex;
@@ -747,6 +757,16 @@ if (window.performance && window.performance.navigation && window.performance.na
         if (link) { window.location.href = link.href; } else { el.click(); }
     }
 
+    // Centraliza o item focado dentro do .home-content (único elemento que rola).
+    // Compara centros (invariante a transform: scale). Corrige o scroll que o
+    // focus() nativo faz, garantindo que subir sempre volta ao estado original.
+    function centerInContent(el) {
+        var sc = document.querySelector(".home-content");
+        if (!sc || !sc.contains(el)) return;
+        var r = el.getBoundingClientRect(), c = sc.getBoundingClientRect();
+        sc.scrollTop += (r.top + r.height/2) - (c.top + c.height/2);
+    }
+
     function closeOpenModal() {
         var cancelBtn = document.querySelector(".modal-overlay.show .modal-btn.cancel, .suggest-modal-overlay.show .modal-btn.cancel");
         if (cancelBtn) cancelBtn.click();
@@ -795,11 +815,11 @@ if (window.performance && window.performance.navigation && window.performance.na
         // Up de continue-card → X do mesmo card (antes de ir pro elemento acima)
         if (dir==="up" && active.classList.contains("continue-card")) {
             var rb = active.querySelector(".remove-btn");
-            if (rb) { rb.focus(); return; }
+            if (rb) { rb.focus(); centerInContent(rb); return; }
         }
         // Down/Left/Right de remove-btn → volta pro card pai
         if (active.classList.contains("remove-btn")) {
-            if (dir !== "up") { var pc = active.closest(".continue-card"); if (pc) { pc.focus(); return; } }
+            if (dir !== "up") { var pc = active.closest(".continue-card"); if (pc) { pc.focus(); centerInContent(pc); return; } }
         }
         // ─────────────────────────────────────────────────────────────────────
 
@@ -814,7 +834,7 @@ if (window.performance && window.performance.navigation && window.performance.na
             var fab = document.querySelector(".suggest-fab");
             if (fab) { fab.focus(); return; }
         }
-        if (next) next.focus();
+        if (next) { next.focus(); centerInContent(next); }
     });
 
     // tabindex + auto-focus

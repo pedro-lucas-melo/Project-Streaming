@@ -55,6 +55,8 @@
             justify-content: center;
             border: 3px solid transparent;
             transition: border-color 0.15s, transform 0.15s, background 0.15s;
+            padding: 0 8px;
+            overflow: hidden;
         }
 
         .profile-btn:hover .avatar,
@@ -68,9 +70,12 @@
 
         .name {
             color: #ddd;
-            font-size: 1.1rem;
+            font-size: 2.5rem;
+            font-weight: bold;
             letter-spacing: 0.05em;
-            margin-top: 1rem;
+            text-transform: uppercase;
+            white-space: nowrap;
+            line-height: 1;
         }
     </style>
 </head>
@@ -95,6 +100,20 @@
 (function() {
     var btns = Array.prototype.slice.call(document.querySelectorAll(".profile-btn"));
     btns.forEach(function(b) { b.setAttribute("tabindex", "0"); });
+
+    // Fonte máxima que preenche o retângulo: começa grande e encolhe até caber
+    Array.prototype.forEach.call(document.querySelectorAll(".avatar .name"), function(n) {
+        var avatar = n.parentNode;
+        var maxW = avatar.clientWidth - 16;
+        var maxH = avatar.clientHeight - 10;
+        var size = 60;
+        n.style.fontSize = size + "px";
+        while (size > 14 && (n.scrollWidth > maxW || n.offsetHeight > maxH)) {
+            size -= 2;
+            n.style.fontSize = size + "px";
+        }
+    });
+
     if (btns.length) btns[0].focus();
 
     document.addEventListener("keydown", function(e) {
