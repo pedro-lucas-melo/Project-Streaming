@@ -41,7 +41,6 @@
             margin-top: 1.5rem;
             flex: 1;
             min-height: 0;
-            overflow: hidden;
         }
 
         .home-nav {
@@ -58,7 +57,9 @@
             min-width: 0;
             height: 100%;
             overflow-y: auto;
-            padding-bottom: 3rem;
+            /* folga pro anel de foco (box-shadow 3px + scale) não cortar nas bordas */
+            padding: 8px 12px 3rem;
+            margin: -8px -12px 0;
         }
 
         /* Esconde barra de rolagem (webkit = webview da TV) */
