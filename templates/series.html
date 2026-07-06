@@ -14,9 +14,8 @@
         .grid {
             display: flex;
             justify-content: center;
-            gap: 28px;
             flex-wrap: wrap;
-            margin-top: 40px;
+            margin-top: 24px;
         }
 
         .card {
@@ -26,10 +25,13 @@
             width: 260px;
             font-size: 1.3rem;
             transition: 0.2s;
+            /* margin no lugar de gap: o webview da TV (Tizen 5.0 = Chromium 63)
+               não suporta gap em flexbox */
+            margin: 16px 14px;
         }
 
-        .card:hover { background: #444; transform: scale(1.05); cursor: pointer; }
-        .card:focus { background: #444; transform: scale(1.08); outline: none; box-shadow: 0 0 0 3px #e50914; }
+        .card:hover { background: #444; transform: scale(1.05); cursor: pointer; z-index: 2; }
+        .card:focus { background: #444; transform: scale(1.08); outline: none; box-shadow: 0 0 0 3px #e50914; z-index: 3; }
 
         .voltar {
             display: inline-block;

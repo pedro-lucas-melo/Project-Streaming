@@ -25,9 +25,8 @@
         .grid {
             display: flex;
             justify-content: center;
-            gap: 28px;
             flex-wrap: wrap;
-            padding: 24px 40px 60px;
+            padding: 24px 26px 60px;
         }
 
         .card {
@@ -42,10 +41,14 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            /* margin no lugar de gap: o webview da TV (Tizen 5.0 = Chromium 63)
+               não suporta gap em flexbox; vertical maior para o scale(1.08)
+               do foco não invadir a linha vizinha */
+            margin: 18px 14px;
         }
 
-        .card:hover { transform: scale(1.05); background: #2a2a2a; }
-        .card:focus { transform: scale(1.08); background: #2a2a2a; outline: none; box-shadow: 0 0 0 3px #e50914; }
+        .card:hover { transform: scale(1.05); background: #2a2a2a; z-index: 2; }
+        .card:focus { transform: scale(1.08); background: #2a2a2a; outline: none; box-shadow: 0 0 0 3px #e50914; z-index: 3; }
 
         .poster {
             width: 220px;

@@ -29,7 +29,6 @@
 
         .profiles {
             display: flex;
-            gap: 2rem;
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -41,7 +40,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
+            /* margin no lugar de gap: o webview da TV (Tizen 5.0 = Chromium 63)
+               não suporta gap em flexbox */
+            margin: 0 1rem;
         }
 
         .avatar {
@@ -69,6 +70,7 @@
             color: #ddd;
             font-size: 1.1rem;
             letter-spacing: 0.05em;
+            margin-top: 1rem;
         }
     </style>
 </head>
