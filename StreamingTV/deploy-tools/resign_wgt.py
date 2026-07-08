@@ -9,13 +9,20 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
-AUTHOR_P12  = r"C:\Users\PedroMelo\SamsungCertificate\PedroStreaming\author.p12"
-DIST_P12    = r"C:\Users\PedroMelo\SamsungCertificate\PedroStreaming\distributor.p12"
-AUTHOR_PWD  = b"Pedro123@"
-DIST_PWD    = b"Pedro123@"
+# Caminhos dos certificados e senhas vêm de variáveis de ambiente — nunca
+# hardcode senhas aqui (este arquivo é versionado).
+#   TIZEN_AUTHOR_P12 / TIZEN_DIST_P12: caminhos dos .p12
+#   TIZEN_AUTHOR_PWD / TIZEN_DIST_PWD: senhas (TIZEN_DIST_PWD cai para a do author)
+def _env(name, default=None):
+    value = os.environ.get(name, default)
+    if value is None:
+        sys.exit(f"Erro: defina a variável de ambiente {name}")
+    return value
 
-def read_pwd(path):
-    return DIST_PWD
+AUTHOR_P12  = _env("TIZEN_AUTHOR_P12")
+DIST_P12    = _env("TIZEN_DIST_P12")
+AUTHOR_PWD  = _env("TIZEN_AUTHOR_PWD").encode()
+DIST_PWD    = _env("TIZEN_DIST_PWD", os.environ.get("TIZEN_AUTHOR_PWD")).encode()
 
 def load_p12(p12_path, pwd):
     with open(p12_path, "rb") as f:
@@ -108,9 +115,8 @@ def build_signature_xml(sig_id, signed_info, sig_value, key_info_certs, prop_obj
 
 def resign(input_wgt, output_wgt):
     # Load certs
-    dist_pwd = read_pwd(DIST_P12.replace(".p12", ".pwd"))
     auth_key, auth_cert, auth_chain = load_p12(AUTHOR_P12, AUTHOR_PWD)
-    dist_key, dist_cert, dist_chain = load_p12(DIST_P12, dist_pwd)
+    dist_key, dist_cert, dist_chain = load_p12(DIST_P12, DIST_PWD)
 
     # Extract wgt
     tmp_dir = Path(input_wgt).with_suffix(".tmp_resign")

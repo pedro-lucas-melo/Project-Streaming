@@ -10,14 +10,16 @@ Inclui app instalável para **Samsung Smart TV (Tizen)**.
 
 - ⚡ Streaming assíncrono com suporte a **Range Requests** (seek sem rebuffering)
 - 👤 **Múltiplos perfis** — cada usuário tem seu histórico e watchlist independente
-- 📺 **Continue assistindo** — retoma de onde parou, com barra de progresso
+- 📺 **Continue assistindo** — retoma de onde parou, com barra de progresso; um card por série (sempre o episódio mais recente, com rótulo `T2 - E05 - Nome`)
+- ⏭️ **Próximo episódio automático** — ao terminar um episódio, avança para o próximo (inclusive entre temporadas)
 - 🎥 **Biblioteca de séries** com navegação por série → temporada → episódio
 - 🎞️ **Biblioteca de filmes** com rota dedicada
 - 🖼️ **Integração TMDB** — pôsteres e metadados automáticos para séries e filmes
 - 📋 **Watchlist** — salve títulos para assistir depois
 - 💡 **Sugestões via Telegram** — envie sugestões de filmes/séries para um bot Telegram
 - 🖥️ Interface web com templates **Jinja2** (dark mode)
-- ▶️ Player HTML5 com controles customizados (seek ±10s, teclas de atalho)
+- ▶️ Player HTML5 com controles customizados, título sobreposto (série / temporada / episódio) e fontes dimensionadas para TV
+- 🎮 **Navegação por controle remoto** — navegação espacial por setas (`static/tv-nav.js`) em todas as grades, com suporte às teclas do controle Samsung (OK, Voltar, botões de mídia)
 - 📱 **App Tizen** — instalável em Samsung Smart TV sem loja de apps
 
 ---
@@ -54,9 +56,16 @@ streaming-server/
 │   ├── season.html      # Episódios de uma temporada
 │   ├── movies.html      # Lista de filmes
 │   └── player.html      # Player de vídeo
+├── static/
+│   ├── tv-nav.js        # Navegação espacial por controle remoto (todas as grades)
+│   ├── manifest.json    # PWA manifest
+│   └── sw.js            # Service worker
 ├── StreamingTV/         # App Tizen para Samsung Smart TV
+│   ├── deploy.ps1       # Deploy na TV via tz install-chain
+│   └── deploy-tools/    # Ferramentas de assinatura/instalação (.wgt)
 ├── scripts/
-│   └── convert.py       # Conversor ffmpeg interativo
+│   ├── convert.py       # Conversor ffmpeg interativo
+│   └── series/          # Scripts de renomeação de episódios por série
 ├── tests/
 │   └── test_media.py
 ├── pyproject.toml
@@ -143,6 +152,8 @@ Acesse em: **http://localhost:8080**
 
 Na rede local (TV, celular): **http://[SEU-IP]:8080**
 
+Para encerrar: `Ctrl+C` (shutdown limpo, sem tracebacks do asyncio).
+
 ---
 
 ## 👤 Perfis
@@ -160,7 +171,10 @@ Para adicionar ou remover perfis, edite diretamente a tabela `profiles` em `stre
 
 O diretório `StreamingTV/` contém um app web instalável em TVs Samsung (Tizen OS, modelos 2017+) **sem precisar da loja de apps**.
 
-Veja as instruções completas em [StreamingTV/README.md](StreamingTV/README.md).
+- Deploy pelo script `StreamingTV/deploy.ps1` (usa `tz install-chain`, que atualiza o app sem desinstalar)
+- `StreamingTV/deploy-tools/` traz ferramentas auxiliares de assinatura e instalação do `.wgt`
+
+Veja as instruções completas — incluindo a seção de **armadilhas conhecidas** (package ID de 10 caracteres, `tz install` vs `install-chain`, `<access origin>`, limitações de iframe) — em [StreamingTV/README.md](StreamingTV/README.md).
 
 ---
 
@@ -179,14 +193,16 @@ Menu interativo: escolha séries ou filmes, selecione quais converter.
 
 ## ⌨️ Atalhos do player
 
-| Tecla | Ação |
-|---|---|
-| `Espaço` / `K` | Play / Pause |
-| `←` | Retroceder 10s |
-| `→` | Avançar 10s |
-| `F` | Tela cheia |
-| `M` | Mudo |
-| `Backspace` / `Esc` | Voltar |
+| Tecla (teclado) | Controle remoto | Ação |
+|---|---|---|
+| `Espaço` / `K` / `Enter` | OK / Play-Pause | Play / Pause |
+| `←` / `→` | — | Retroceder / avançar 10s |
+| — | Rewind / Fast Forward | Retroceder / avançar 30s |
+| `↑` / `↓` | — | Volume +/- |
+| `M` | — | Mudo |
+| `Backspace` / `Esc` | Voltar | Voltar |
+
+O player entra em tela cheia automaticamente ao iniciar a reprodução. Os controles somem após 3s durante a reprodução e ficam sempre visíveis quando pausado.
 
 ---
 
@@ -200,4 +216,4 @@ poetry run pytest tests/
 
 ## 📝 Licença
 
-MIT — veja [LICENSE](LICENSE)
+MIT
