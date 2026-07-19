@@ -257,6 +257,30 @@
         .continue-card:hover .remove-btn { opacity: 1; }
         .remove-btn:hover { background: rgba(180,0,0,0.8); }
 
+        .restart-btn {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.75);
+            border: none;
+            color: white;
+            font-size: 18px;
+            line-height: 36px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.15s, box-shadow 0.15s;
+            z-index: 10;
+            padding: 0;
+            text-decoration: none;
+        }
+        .restart-btn:focus { opacity: 1; outline: none; box-shadow: 0 0 0 3px #e50914; background: rgba(0,90,180,0.9); }
+        .continue-card:hover .restart-btn { opacity: 1; }
+        .restart-btn:hover { background: rgba(0,90,180,0.8); }
+
         /* ── MODAL CONFIRMAÇÃO ── */
         .modal-overlay {
             display: none;
@@ -437,6 +461,7 @@
                 {% for item in in_progress %}
                 <div class="continue-card" id="card-{{ loop.index }}">
                     <button class="remove-btn" data-kind="progress" data-path="{{ item.file_path | e }}" data-card="card-{{ loop.index }}" data-title="{{ item.title | e }}" onclick="removeBtnClick(event, this)" title="Remover">✕</button>
+                    <a class="restart-btn" href="/watch?path={{ item.encoded_path }}&restart=1" title="Assistir do início">⟲</a>
                     <a class="card-link" href="/watch?path={{ item.encoded_path }}">
                         {% if item.poster_url %}
                         <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
@@ -724,7 +749,7 @@ if (window.performance && window.performance.navigation && window.performance.na
     function getFocusable() {
         if (isModalOpen()) return getModalFocusable();
         return Array.prototype.slice.call(document.querySelectorAll(
-            ".home-nav .card, .continue-card, .remove-btn, #trocarPerfil, .suggest-fab"
+            ".home-nav .card, .continue-card, .remove-btn, .restart-btn, #trocarPerfil, .suggest-fab"
         )).filter(function(el) {
             // fixed elements têm offsetParent===null mas são visíveis
             var s = getComputedStyle(el);
@@ -818,15 +843,21 @@ if (window.performance && window.performance.navigation && window.performance.na
             var rb = active.querySelector(".remove-btn");
             if (rb) { rb.focus(); centerInContent(rb); return; }
         }
-        // Down/Left/Right de remove-btn → volta pro card pai
+        // remove-btn: Left → restart-btn do mesmo card; resto (menos Up) → card pai
         if (active.classList.contains("remove-btn")) {
+            if (dir === "left") { var sb = active.closest(".continue-card").querySelector(".restart-btn"); if (sb) { sb.focus(); centerInContent(sb); return; } }
             if (dir !== "up") { var pc = active.closest(".continue-card"); if (pc) { pc.focus(); centerInContent(pc); return; } }
+        }
+        // restart-btn: Right → remove-btn do mesmo card; resto (menos Up) → card pai
+        if (active.classList.contains("restart-btn")) {
+            if (dir === "right") { var xb = active.closest(".continue-card").querySelector(".remove-btn"); if (xb) { xb.focus(); centerInContent(xb); return; } }
+            if (dir !== "up") { var pc2 = active.closest(".continue-card"); if (pc2) { pc2.focus(); centerInContent(pc2); return; } }
         }
         // ─────────────────────────────────────────────────────────────────────
 
         var next = nearest(items, active, dir);
-        // remove-btn só é alvo direto se vier do seu próprio continue-card (via Up)
-        if (next && next.classList.contains("remove-btn") && !active.classList.contains("continue-card")) {
+        // botões overlay só são alvo direto vindo do próprio continue-card (via Up)
+        if (next && (next.classList.contains("remove-btn") || next.classList.contains("restart-btn")) && !active.classList.contains("continue-card")) {
             next = next.closest(".continue-card") || next;
         }
         // Down de continue-card sem outro card abaixo → Sugestão
@@ -841,7 +872,7 @@ if (window.performance && window.performance.navigation && window.performance.na
     // tabindex + auto-focus
     var all = getFocusable();
     all.forEach(function(el){ if(!el.getAttribute("tabindex")) el.setAttribute("tabindex","0"); });
-    document.querySelectorAll(".remove-btn").forEach(function(b){ b.setAttribute("tabindex","0"); });
+    document.querySelectorAll(".remove-btn, .restart-btn").forEach(function(b){ b.setAttribute("tabindex","0"); });
     var navCard = document.querySelector(".home-nav .card");
     if (navCard) setTimeout(function(){ navCard.focus(); }, 100);
 })();

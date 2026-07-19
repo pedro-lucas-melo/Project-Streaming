@@ -269,6 +269,9 @@ class StreamingServer:
         current_rating = await get_rating(profile_id, media_key) if profile_id else None
         progress = await get_progress(profile_id, path) if profile_id else None
         resume_position = progress["position"] if progress and progress.get("position") else 0
+        # ?restart=1 → assistir do início, ignora posição salva
+        if request.query.get("restart") == "1":
+            resume_position = 0
         # Próximo episódio (só séries) — usado para auto-avanço ao terminar.
         next_path = None
         if media_type == "tv" and self.series_library:
