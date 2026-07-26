@@ -28,88 +28,19 @@
             text-align: center;
         }
 
-        h1 {
-            font-size: 3.8rem;
-            margin-bottom: 1rem;
-            margin-top: 2rem;
-        }
-
-        /* ── LAYOUT PRINCIPAL ── */
-        .home-layout {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            width: 100%;
-            padding: 0 2rem;
-            margin-top: 1.5rem;
-            flex: 1;
-            min-height: 0;
-        }
-
-        .home-nav {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            flex-shrink: 0;
-            width: 220px;
-            margin-right: 2.5rem;
-        }
-
+        /* ── CONTEÚDO (rola sob o breadcrumb do topo) ── */
         .home-content {
             flex: 1;
-            min-width: 0;
-            height: 100%;
+            min-height: 0;
+            width: 100%;
             overflow-y: auto;
+            text-align: left;
             /* folga pro anel de foco (box-shadow 3px + scale) não cortar nas bordas */
-            padding: 8px 12px 3rem;
-            margin: -8px -12px 0;
+            padding: 1.5rem 24px 3rem;
         }
 
         /* Esconde barra de rolagem (webkit = webview da TV) */
         .home-content::-webkit-scrollbar { display: none; }
-
-        .categories {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            -webkit-backdrop-filter: var(--blur);
-            backdrop-filter: var(--blur);
-            box-shadow: var(--shadow-sm);
-            border-radius: var(--radius);
-            padding: 2rem 1.5rem;
-            text-decoration: none;
-            color: var(--text);
-            font-size: 1.6rem;
-            font-weight: bold;
-            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .card .icon { margin-bottom: 0.5rem; }
-
-        .card:hover {
-            background: var(--surface-focus);
-            transform: scale(1.05);
-            cursor: pointer;
-        }
-
-        .card:focus {
-            background: var(--surface-focus);
-            transform: scale(1.08);
-            outline: none;
-            box-shadow: var(--focus);
-        }
-
-        .card .icon {
-            font-size: 3.2rem;
-        }
 
         /* ── CONTINUAR ASSISTINDO ── */
         .continue-section {
@@ -452,29 +383,18 @@
 </head>
 <body>
 
-<h1>🍿BlackFlix</h1>
+<nav class="crumbs">
+    <a class="crumb brand" href="/profile/{{ profile_slug }}">BlackFlix</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb" href="/profiles/exit">{{ profile_name }}</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb{% if page == 'series' %} current{% endif %}" href="/series-list">Séries</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb{% if page == 'movies' %} current{% endif %}" href="/movies">Filmes</a>
+</nav>
 
-<p style="color:#aaa; margin-bottom:1rem; font-size:1.4rem;">
-    Olá, <strong style="color:white">{{ profile.name }}</strong> —
-    <a href="/profiles/exit" id="trocarPerfil" class="tv-btn">Trocar perfil</a>
-</p>
-
-<div class="home-layout">
-    <nav class="home-nav">
-        <div class="categories">
-            <a class="card" href="/series-list">
-                <span class="icon">🎬</span>
-                Séries
-            </a>
-            <a class="card" href="/movies">
-                <span class="icon">🎥</span>
-                Filmes
-            </a>
-        </div>
-    </nav>
-
-    <div class="home-content">
-        <div class="continue-section" id="progress-section">
+<div class="home-content">
+    <div class="continue-section" id="progress-section">
             <h2>Continuar assistindo</h2>
             <div class="continue-empty"{% if in_progress %} style="display:none"{% endif %}>Nada por aqui ainda.</div>
             <div class="continue-list">
@@ -527,7 +447,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <!-- Botão flutuante sugestão -->
 <button class="suggest-fab" onclick="openSuggestModal()">💡 Sugestão</button>
@@ -777,7 +696,7 @@ if (window.performance && window.performance.navigation && window.performance.na
     function getFocusable() {
         if (isModalOpen()) return getModalFocusable();
         return Array.prototype.slice.call(document.querySelectorAll(
-            ".home-nav .card, .continue-card, .remove-btn, .restart-btn, #trocarPerfil, .suggest-fab"
+            ".crumb, .continue-card, .remove-btn, .restart-btn, .suggest-fab"
         )).filter(function(el) {
             // fixed elements têm offsetParent===null mas são visíveis
             var s = getComputedStyle(el);
@@ -901,8 +820,9 @@ if (window.performance && window.performance.navigation && window.performance.na
     var all = getFocusable();
     all.forEach(function(el){ if(!el.getAttribute("tabindex")) el.setAttribute("tabindex","0"); });
     document.querySelectorAll(".remove-btn, .restart-btn").forEach(function(b){ b.setAttribute("tabindex","0"); });
-    var navCard = document.querySelector(".home-nav .card");
-    if (navCard) setTimeout(function(){ navCard.focus(); }, 100);
+    // Foco inicial: primeiro card de "Continuar assistindo"; se vazio, 1º item do breadcrumb.
+    var firstFocus = document.querySelector(".continue-card") || document.querySelector(".crumb");
+    if (firstFocus) setTimeout(function(){ firstFocus.focus(); }, 100);
 })();
 </script>
 </body>

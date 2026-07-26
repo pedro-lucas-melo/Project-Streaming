@@ -123,7 +123,15 @@
 </head>
 <body>
 
-<h1>🎥 Filmes</h1>
+<nav class="crumbs">
+    <a class="crumb brand" href="/profile/{{ profile_slug }}">BlackFlix</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb" href="/profiles/exit">{{ profile_name }}</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb" href="/series-list">Séries</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb current" href="/movies">Filmes</a>
+</nav>
 
 <div class="grid">
     {% for movie in movies %}
@@ -149,8 +157,6 @@
     {% endfor %}
 </div>
 
-<a class="voltar" href="/profile/{{ profile_slug }}">← Voltar</a>
-
 <script src="/static/tv-nav.js"></script>
 <script>
 function openMovie(el) {
@@ -160,7 +166,7 @@ function openMovie(el) {
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.js");
 (function() {
     function getFocusable() {
-        return Array.prototype.slice.call(document.querySelectorAll('.card, .wl-btn, .voltar'))
+        return Array.prototype.slice.call(document.querySelectorAll('.crumb, .card, .wl-btn'))
             .filter(function(el) { return el.offsetParent !== null; });
     }
     function activate(el) {
@@ -200,7 +206,8 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
     });
     var all = getFocusable();
     all.forEach(function(el){ if(!el.getAttribute("tabindex")) el.setAttribute("tabindex","0"); });
-    if (all.length) setTimeout(function(){ all[0].focus(); }, 100);
+    var firstFocus = document.querySelector('.card') || all[0];
+    if (firstFocus) setTimeout(function(){ firstFocus.focus(); }, 100);
 })();
 
 async function toggleWatchlist(btn) {

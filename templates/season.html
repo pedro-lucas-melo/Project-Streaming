@@ -64,6 +64,16 @@
 </head>
 <body>
 
+<nav class="crumbs">
+    <a class="crumb brand" href="/profile/{{ profile_slug }}">BlackFlix</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb" href="/profiles/exit">{{ profile_name }}</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb current" href="/series-list">Séries</a>
+    <span class="crumb-sep">›</span>
+    <a class="crumb" href="/movies">Filmes</a>
+</nav>
+
 <h1>{{ series }} — {{ season }}</h1>
 
 <div class="lista">
@@ -85,9 +95,6 @@
     {% endfor %}
 </div>
 
-<br>
-<a class="voltar" href="/series?name={{ series }}" onclick="event.preventDefault();goBack();">← Voltar</a>
-
 <script src="/static/tv-nav.js"></script>
 <script>
 function openEpisode(el) {
@@ -100,12 +107,13 @@ function goBack() {
 }
 (function() {
     function getFocusable() {
-        return Array.prototype.slice.call(document.querySelectorAll('.card[data-path], .voltar'))
+        return Array.prototype.slice.call(document.querySelectorAll('.crumb, .card[data-path]'))
             .filter(function(el) { return el.offsetParent !== null; });
     }
     var all = getFocusable();
     all.forEach(function(el){ if(!el.getAttribute("tabindex")) el.setAttribute("tabindex","0"); });
-    if (all.length) setTimeout(function(){ all[0].focus(); }, 100);
+    var firstFocus = document.querySelector('.card[data-path]') || all[0];
+    if (firstFocus) setTimeout(function(){ firstFocus.focus(); }, 100);
 
     document.addEventListener("keydown", function(e) {
         var kc = e.keyCode || e.which;

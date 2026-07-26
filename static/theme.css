@@ -69,3 +69,51 @@
     backdrop-filter: var(--blur);
     box-shadow: var(--shadow);
 }
+
+/* ── Breadcrumb de navegação (topo, global) ──────────────────────────────────
+   BlackFlix › {perfil} › Séries › Filmes. Barra de vidro compacta que
+   substitui o nav lateral e os botões "← Voltar". */
+.crumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 12px 20px;
+    background: var(--glass);
+    border-bottom: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: var(--blur);
+    backdrop-filter: var(--blur);
+    box-shadow: var(--shadow-sm);
+    font-size: 1.15rem;
+    text-align: left;
+}
+.crumb {
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+.crumb.brand {
+    color: var(--text);
+    font-weight: bold;
+    font-size: 1.3rem;
+    letter-spacing: 0.02em;
+}
+.crumb.current { color: var(--text); }
+.crumb:hover,
+.crumb:focus {
+    background: var(--surface-focus);
+    color: var(--text);
+    outline: none;
+    box-shadow: var(--focus);
+    transform: scale(1.03);
+}
+/* margem no lugar de gap (Chromium 63 sem gap em flexbox) */
+.crumb-sep {
+    color: var(--text-faint);
+    margin: 0 2px;
+    -webkit-user-select: none;
+    user-select: none;
+}

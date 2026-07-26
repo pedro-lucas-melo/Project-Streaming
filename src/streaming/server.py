@@ -164,7 +164,14 @@ class StreamingServer:
                     "file_path": fp,
                 })
         watchlist = await get_watchlist(profile_id)
-        return {"profile": profile, "in_progress": enriched, "watchlist": watchlist}
+        return {
+            "profile": profile,
+            "profile_name": profile["name"] if profile else "",
+            "profile_slug": self._profile_slug(profile),
+            "page": "home",
+            "in_progress": enriched,
+            "watchlist": watchlist,
+        }
 
     def _profile_slug(self, profile: dict | None) -> str:
         if not profile:
@@ -184,7 +191,12 @@ class StreamingServer:
         for name in series_names:
             meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
             series.append({"name": name, "poster_url": meta.get("poster_url"), "in_watchlist": name in wl_keys, "encoded_name": quote(name)})
-        return {"series": series, "profile_slug": self._profile_slug(profile)}
+        return {
+            "series": series,
+            "profile_name": profile["name"] if profile else "",
+            "profile_slug": self._profile_slug(profile),
+            "page": "series",
+        }
 
     @aiohttp_jinja2.template("movies.html")
     async def handle_movies(self, request):
@@ -208,7 +220,12 @@ class StreamingServer:
         for m in movies_raw:
             meta = await fetch_metadata(self.config.tmdb_token, m["name"], "movie")
             movies.append({**m, "poster_url": meta.get("poster_url"), "in_watchlist": m["name"] in wl_keys, "encoded_path": quote(m["path"])})
-        return {"movies": movies, "profile_slug": self._profile_slug(profile)}
+        return {
+            "movies": movies,
+            "profile_name": profile["name"] if profile else "",
+            "profile_slug": self._profile_slug(profile),
+            "page": "movies",
+        }
 
     @aiohttp_jinja2.template("series.html")
     async def handle_series(self, request):
@@ -219,7 +236,14 @@ class StreamingServer:
             raise web.HTTPNotFound(reason="Diretório de séries não configurado")
         structure = self.series_library.get_structure()
         seasons = structure.get(series_name, {})
-        return {"series": series_name, "seasons": sorted(seasons.keys())}
+        profile = await get_profile(self._require_profile(request))
+        return {
+            "series": series_name,
+            "seasons": sorted(seasons.keys()),
+            "profile_name": profile["name"] if profile else "",
+            "profile_slug": self._profile_slug(profile),
+            "page": "series",
+        }
 
     @aiohttp_jinja2.template("season.html")
     async def handle_season(self, request):
@@ -234,7 +258,15 @@ class StreamingServer:
             structure.get(series_name, {}).get(season_name, []),
             key=lambda x: x["name"],
         )
-        return {"series": series_name, "season": season_name, "episodes": episodes}
+        profile = await get_profile(self._require_profile(request))
+        return {
+            "series": series_name,
+            "season": season_name,
+            "episodes": episodes,
+            "profile_name": profile["name"] if profile else "",
+            "profile_slug": self._profile_slug(profile),
+            "page": "series",
+        }
 
     @staticmethod
     def _strip_media_ext(filename: str) -> str:
