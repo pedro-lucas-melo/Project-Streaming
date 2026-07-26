@@ -164,6 +164,7 @@ class StreamingServer:
                     "file_path": fp,
                 })
         watchlist = await get_watchlist(profile_id)
+        carousel_rows = await self._carousel_poster_rows()
         return {
             "profile": profile,
             "profile_name": profile["name"] if profile else "",
@@ -171,7 +172,41 @@ class StreamingServer:
             "page": "home",
             "in_progress": enriched,
             "watchlist": watchlist,
+            "carousel_rows": carousel_rows,
         }
+
+    async def _carousel_poster_rows(self, rows: int = 3, min_per_row: int = 8, max_per_row: int = 10) -> list[list[str]]:
+        """Pôsteres de todos os títulos cadastrados (séries + filmes), para o
+        carrossel decorativo de fundo da home. Metadados vêm do cache TMDB no
+        banco (fetch_metadata), então após a 1ª carga é rápido.
+
+        Cada linha é limitada a max_per_row pôsteres distintos — o carrossel é
+        só decoração, e a TV (Chromium 63, GPU fraca) não deve gastar decode em
+        dezenas de imagens no load da home. Linhas curtas são repetidas até
+        min_per_row para preencher a largura e permitir loop contínuo sem
+        emenda."""
+        posters: list[str] = []
+        if self.series_library:
+            for name in sorted(self.series_library.get_structure().keys()):
+                meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
+                if meta.get("poster_url"):
+                    posters.append(meta["poster_url"])
+        if self.movies_library:
+            for v in self.movies_library.list_videos():
+                meta = await fetch_metadata(self.config.tmdb_token, self._strip_media_ext(v["name"]), "movie")
+                if meta.get("poster_url"):
+                    posters.append(meta["poster_url"])
+        out: list[list[str]] = []
+        for i in range(rows):
+            row = posters[i::rows][:max_per_row]
+            if row:
+                padded = list(row)
+                while len(padded) < min_per_row:
+                    padded += row
+                out.append(padded)
+            else:
+                out.append([])
+        return out
 
     def _profile_slug(self, profile: dict | None) -> str:
         if not profile:
