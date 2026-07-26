@@ -327,6 +327,21 @@
         .suggest-fab:hover { filter: brightness(1.1); transform: scale(1.05); }
         .suggest-fab:focus { filter: brightness(1.1); transform: scale(1.05); outline: none; box-shadow: 0 0 0 4px white; }
 
+        /* Texto de chamada logo acima do botão de sugestão */
+        .suggest-hint {
+            position: fixed;
+            bottom: 92px;
+            right: 30px;
+            z-index: 49;
+            max-width: 240px;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            text-align: right;
+            line-height: 1.35;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+            pointer-events: none;
+        }
+
         /* ── MODAL SUGESTÃO ── */
         .suggest-modal-overlay {
             display: none;
@@ -478,32 +493,10 @@
                 {% endfor %}
             </div>
         </div>
-
-        <div class="continue-section" id="watchlist-section">
-            <h2>Assistir depois</h2>
-            <div class="continue-empty"{% if watchlist %} style="display:none"{% endif %}>Nada por aqui ainda.</div>
-            <div class="continue-list">
-                {% for item in watchlist %}
-                <div class="continue-card" id="wl-card-{{ loop.index }}">
-                    <button class="remove-btn" data-kind="watchlist" data-mediakey="{{ item.media_key | e }}" data-card="wl-card-{{ loop.index }}" data-title="{{ item.title | e }}" onclick="removeBtnClick(event, this)" title="Remover">✕</button>
-                    <a class="card-link" href="{{ item.link_url }}">
-                        {% if item.poster_url and item.poster_url != 'None' %}
-                        <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
-                        {% else %}
-                        <div class="continue-poster-placeholder">{% if item.media_type == 'tv' %}🎬{% else %}🎥{% endif %}</div>
-                        {% endif %}
-                        <div class="continue-info">
-                            <div class="continue-title">{{ item.title }}</div>
-                            <div class="continue-subtitle">{{ 'Série' if item.media_type == 'tv' else 'Filme' }}</div>
-                        </div>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
     </div>
 
 <!-- Botão flutuante sugestão -->
+<div class="suggest-hint">Lembrou de algum título? Envie como sugestão.</div>
 <button class="suggest-fab" onclick="openSuggestModal()">💡 Sugestão</button>
 
 <!-- Modal sugestão -->
@@ -548,14 +541,9 @@ function restartClick(e, btn) {
 function removeBtnClick(e, btn) {
     e.preventDefault();
     e.stopPropagation();
-    var kind = btn.dataset.kind, title = btn.dataset.title, cardId = btn.dataset.card;
-    if (kind === "progress") {
-        _pendingRemove = { type: "progress", filePath: btn.dataset.path, cardId: cardId };
-        document.getElementById("removeModalMsg").textContent = `Remover "${title}" da lista?`;
-    } else {
-        _pendingRemove = { type: "watchlist", mediaKey: btn.dataset.mediakey, cardId: cardId };
-        document.getElementById("removeModalMsg").textContent = `Remover "${title}" de Assistir depois?`;
-    }
+    var title = btn.dataset.title, cardId = btn.dataset.card;
+    _pendingRemove = { filePath: btn.dataset.path, cardId: cardId };
+    document.getElementById("removeModalMsg").textContent = `Remover "${title}" da lista?`;
     document.getElementById("removeModal").classList.add("show");
 }
 
@@ -568,22 +556,13 @@ document.getElementById("removeConfirmBtn").addEventListener("click", async () =
     if (!_pendingRemove) return;
     const pending = _pendingRemove;
     closeRemoveModal();
-    if (pending.type === "progress") {
-        const res = await fetch("/api/progress?" + new URLSearchParams({ path: pending.filePath }), { method: "DELETE", credentials: "same-origin" });
-        if (!res.ok) { alert("Erro ao remover (" + res.status + ")"); return; }
-        const card = document.getElementById(pending.cardId);
-        if (card) card.remove();
-        const section = document.getElementById("progress-section");
-        const list = section && section.querySelector(".continue-list");
-        if (list && !list.children.length) section.querySelector(".continue-empty").style.display = "";
-    } else {
-        const res = await fetch("/api/watchlist?" + new URLSearchParams({ media_key: pending.mediaKey }), { method: "DELETE", credentials: "same-origin" });
-        if (!res.ok) { alert("Erro ao remover (" + res.status + ")"); return; }
-        const card = document.getElementById(pending.cardId);
-        if (card) card.remove();
-        const section = document.getElementById("watchlist-section");
-        if (section && !section.querySelector(".continue-card")) section.querySelector(".continue-empty").style.display = "";
-    }
+    const res = await fetch("/api/progress?" + new URLSearchParams({ path: pending.filePath }), { method: "DELETE", credentials: "same-origin" });
+    if (!res.ok) { alert("Erro ao remover (" + res.status + ")"); return; }
+    const card = document.getElementById(pending.cardId);
+    if (card) card.remove();
+    const section = document.getElementById("progress-section");
+    const list = section && section.querySelector(".continue-list");
+    if (list && !list.children.length) section.querySelector(".continue-empty").style.display = "";
 });
 
 document.getElementById("removeModal").addEventListener("click", (e) => {
@@ -712,7 +691,7 @@ async function sendSuggestion() {
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.js");
 
 // Força reload quando o usuário volta pra home pelo botão Voltar do controle.
-// Necessário para mostrar itens recém-adicionados na watchlist.
+// Mantém "Continuar assistindo" atualizado (progresso novo) ao retornar do player.
 // pageshow+persisted é mais confiável que performance.navigation (depreciado) em TV browsers.
 window.addEventListener("pageshow", function(e) {
     if (e.persisted) { window.location.reload(); }

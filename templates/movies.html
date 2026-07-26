@@ -79,46 +79,6 @@
             line-height: 1.3;
         }
 
-        .wl-btn {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(30,130,30,0.45);
-            border: none;
-            color: white;
-            font-size: 20px;
-            line-height: 36px;
-            text-align: center;
-            cursor: pointer;
-            opacity: 0.75;
-            transition: opacity 0.15s, box-shadow 0.15s;
-            z-index: 10;
-            padding: 0;
-        }
-        .wl-btn:focus { opacity: 1; outline: none; box-shadow: 0 0 0 3px #4caf50; background: rgba(30,160,30,0.9); border-radius: 50%; }
-        .wl-btn.in-wl { background: rgba(30,130,30,0.5); color: white; opacity: 0.9; }
-        .wl-btn.in-wl:focus { box-shadow: 0 0 0 3px #4caf50; background: rgba(30,160,30,0.9); }
-
-        .voltar {
-            display: block;
-            width: fit-content;
-            margin: 0 auto 40px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            text-decoration: none;
-            padding: 16px 36px;
-            border-radius: var(--radius);
-            font-size: 1.3rem;
-            font-weight: bold;
-            transition: background 0.15s, transform 0.15s;
-        }
-        .voltar:hover { background: var(--surface-focus); }
-        .voltar:focus { background: var(--surface-focus); outline: none; transform: scale(1.05); box-shadow: var(--focus); }
-
     </style>
 </head>
 <body>
@@ -144,15 +104,6 @@
             {% endif %}
             <div class="card-title">{{ movie.name }}</div>
         </div>
-        <button class="wl-btn {% if movie.in_watchlist %}in-wl{% endif %}"
-            data-key="{{ movie.name | e }}"
-            data-title="{{ movie.name | e }}"
-            data-poster="{{ movie.poster_url | e }}"
-            data-type="movie"
-            data-link="/watch?path={{ movie.encoded_path | e }}"
-            onclick="toggleWatchlist(this)">
-            {% if movie.in_watchlist %}✓{% else %}+{% endif %}
-        </button>
     </div>
     {% endfor %}
 </div>
@@ -166,7 +117,7 @@ function openMovie(el) {
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.js");
 (function() {
     function getFocusable() {
-        return Array.prototype.slice.call(document.querySelectorAll('.crumb, .card, .wl-btn'))
+        return Array.prototype.slice.call(document.querySelectorAll('.crumb, .card'))
             .filter(function(el) { return el.offsetParent !== null; });
     }
     function activate(el) {
@@ -190,18 +141,7 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
         var dir=kc===39?"right":kc===37?"left":kc===40?"down":kc===38?"up":null;
         if (!dir) return;
         e.preventDefault();
-        // Up de .card → wl-btn interno (igual ao X)
-        if (dir==="up" && active.classList.contains("card")) {
-            var wb = active.querySelector(".wl-btn"); if (wb) { wb.focus(); return; }
-        }
-        // wl-btn: Down/Left/Right → card pai; Up → card acima (busca a partir do card pai)
-        if (active.classList.contains("wl-btn")) {
-            if (dir!=="up") { var pc = active.closest(".card"); if (pc) { pc.focus(); return; } }
-            active = active.closest(".card") || active;
-        }
-        // Navegação só entre cards/voltar (wl-btn excluído → sem pular títulos)
-        var navItems = items.filter(function(el){ return !el.classList.contains("wl-btn"); });
-        var next = tvNavMove(navItems, active, dir);
+        var next = tvNavMove(items, active, dir);
         if (next) next.focus();
     });
     var all = getFocusable();
@@ -209,31 +149,6 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/static/sw.j
     var firstFocus = document.querySelector('.card') || all[0];
     if (firstFocus) setTimeout(function(){ firstFocus.focus(); }, 100);
 })();
-
-async function toggleWatchlist(btn) {
-    var inWl = btn.classList.contains("in-wl");
-    var key = btn.dataset.key;
-    if (inWl) {
-        var r = await fetch("/api/watchlist?" + new URLSearchParams({ media_key: key }), { method: "DELETE", credentials: "same-origin" });
-        if (r.ok) { btn.classList.remove("in-wl"); btn.textContent = "+"; }
-    } else {
-        var poster = btn.dataset.poster;
-        if (poster === "None" || poster === "") poster = null;
-        var res = await fetch("/api/watchlist", {
-            method: "POST",
-            credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ media_key: key, title: btn.dataset.title, poster_url: poster, media_type: btn.dataset.type, link_url: btn.dataset.link }),
-        });
-        if (res.ok) {
-            btn.classList.add("in-wl");
-            btn.textContent = "✓";
-        } else {
-            btn.textContent = "!";
-        }
-    }
-}
-
 </script>
 
 </body>

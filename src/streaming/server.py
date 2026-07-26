@@ -5,7 +5,6 @@ from streaming.database import (
     init_db, get_all_profiles, get_profile,
     upsert_progress, get_progress, get_in_progress, delete_progress,
     upsert_rating, get_rating,
-    add_to_watchlist, remove_from_watchlist, get_watchlist, get_watchlist_keys,
 )
 from streaming.tmdb import fetch_metadata, search_suggestions
 import asyncio
@@ -56,9 +55,6 @@ class StreamingServer:
         # AVALIAÇÃO DESABILITADA — remover comentário para reativar
         # self.app.router.add_get("/api/rating", self.handle_rating_get)
         # self.app.router.add_post("/api/rating", self.handle_rating_post)
-        self.app.router.add_get("/api/watchlist", self.handle_watchlist_get)
-        self.app.router.add_post("/api/watchlist", self.handle_watchlist_post)
-        self.app.router.add_delete("/api/watchlist", self.handle_watchlist_delete)
         self.app.router.add_static("/static", BASE_DIR / "static")
         self.app.on_startup.append(self._on_startup)
 
@@ -163,7 +159,6 @@ class StreamingServer:
                     "encoded_path": encoded_path,
                     "file_path": fp,
                 })
-        watchlist = await get_watchlist(profile_id)
         carousel_rows = await self._carousel_poster_rows()
         return {
             "profile": profile,
@@ -171,7 +166,6 @@ class StreamingServer:
             "profile_slug": self._profile_slug(profile),
             "page": "home",
             "in_progress": enriched,
-            "watchlist": watchlist,
             "carousel_rows": carousel_rows,
         }
 
@@ -219,13 +213,12 @@ class StreamingServer:
             raise web.HTTPNotFound(reason="Diretório de séries não configurado")
         profile_id = self._require_profile(request)
         profile = await get_profile(profile_id) if profile_id else None
-        wl_keys = await get_watchlist_keys(profile_id) if profile_id else set()
         structure = self.series_library.get_structure()
         series_names = sorted(structure.keys())
         series = []
         for name in series_names:
             meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
-            series.append({"name": name, "poster_url": meta.get("poster_url"), "in_watchlist": name in wl_keys, "encoded_name": quote(name)})
+            series.append({"name": name, "poster_url": meta.get("poster_url"), "encoded_name": quote(name)})
         return {
             "series": series,
             "profile_name": profile["name"] if profile else "",
@@ -239,7 +232,6 @@ class StreamingServer:
             raise web.HTTPNotFound(reason="Diretório de filmes não configurado")
         profile_id = self._require_profile(request)
         profile = await get_profile(profile_id) if profile_id else None
-        wl_keys = await get_watchlist_keys(profile_id) if profile_id else set()
         videos = self.movies_library.list_videos()
         movies_raw = sorted(
             [
@@ -254,7 +246,7 @@ class StreamingServer:
         movies = []
         for m in movies_raw:
             meta = await fetch_metadata(self.config.tmdb_token, m["name"], "movie")
-            movies.append({**m, "poster_url": meta.get("poster_url"), "in_watchlist": m["name"] in wl_keys, "encoded_path": quote(m["path"])})
+            movies.append({**m, "poster_url": meta.get("poster_url"), "encoded_path": quote(m["path"])})
         return {
             "movies": movies,
             "profile_name": profile["name"] if profile else "",
@@ -487,40 +479,6 @@ class StreamingServer:
         except (KeyError, ValueError, TypeError):
             return web.Response(status=400)
         await upsert_rating(profile_id, media_key, rating)
-        return web.Response(status=204)
-
-    async def handle_watchlist_get(self, request: web.Request):
-        profile_id = self._require_profile(request)
-        if not profile_id:
-            return web.json_response({"in_watchlist": False})
-        media_key = request.query.get("media_key", "")
-        keys = await get_watchlist_keys(profile_id)
-        return web.json_response({"in_watchlist": media_key in keys})
-
-    async def handle_watchlist_post(self, request: web.Request):
-        profile_id = self._require_profile(request)
-        if not profile_id:
-            return web.Response(status=401)
-        try:
-            data = await request.json()
-            media_key = data["media_key"]
-            title = data["title"]
-            poster_url = data.get("poster_url")
-            media_type = data["media_type"]
-            link_url = data["link_url"]
-        except (KeyError, TypeError):
-            return web.Response(status=400)
-        await add_to_watchlist(profile_id, media_key, title, poster_url, media_type, link_url)
-        return web.Response(status=204)
-
-    async def handle_watchlist_delete(self, request: web.Request):
-        profile_id = self._require_profile(request)
-        if not profile_id:
-            return web.Response(status=401)
-        media_key = request.query.get("media_key", "")
-        if not media_key:
-            return web.Response(status=400)
-        await remove_from_watchlist(profile_id, media_key)
         return web.Response(status=204)
 
     async def handle_progress_delete(self, request: web.Request):
