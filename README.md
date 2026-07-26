@@ -1,4 +1,4 @@
-# 🎬 Project-Streaming
+# 🎬 BlackFlix
 
 Servidor de streaming de vídeo local, leve e assíncrono, construído com **Python** e **aiohttp**.
 Serve arquivos MP4/MKV com suporte completo a HTTP Range Requests — seek, pausa e retomada no player.

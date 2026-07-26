@@ -1,7 +1,7 @@
 {
-  "name": "Streaming",
-  "short_name": "Streaming",
-  "description": "Streaming pessoal de filmes e séries",
+  "name": "BlackFlix",
+  "short_name": "BlackFlix",
+  "description": "Seus filmes e séries, do seu jeito",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111111",
