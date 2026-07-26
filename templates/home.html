@@ -268,11 +268,26 @@
         .modal-btn.cancel:hover  { background: var(--surface-focus); }
         .modal-btn.cancel:focus  { outline: none; background: var(--surface-focus); box-shadow: 0 0 0 4px white; transform: scale(1.05); }
 
-        /* ── BOTÃO SUGESTÃO FLUTUANTE ── */
-        .suggest-fab {
+        /* ── SUGESTÃO (dock fixo: texto centralizado acima do botão) ── */
+        .suggest-dock {
             position: fixed;
             bottom: 40px;
             right: 40px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;   /* centraliza o texto sobre o botão */
+        }
+        .suggest-hint {
+            margin-bottom: 14px;
+            color: var(--text-dim);
+            font-size: 1.25rem;
+            text-align: center;
+            line-height: 1.4;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+            pointer-events: none;
+        }
+        .suggest-fab {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -286,27 +301,11 @@
             font-weight: bold;
             letter-spacing: 0.01em;
             cursor: pointer;
-            z-index: 50;
             box-shadow: var(--shadow);
             transition: filter 0.15s, transform 0.15s;
         }
         .suggest-fab:hover { filter: brightness(1.1); transform: scale(1.05); }
         .suggest-fab:focus { filter: brightness(1.1); transform: scale(1.05); outline: none; box-shadow: 0 0 0 4px white; }
-
-        /* Texto de chamada logo acima do botão de sugestão */
-        .suggest-hint {
-            position: fixed;
-            bottom: 122px;
-            right: 40px;
-            z-index: 49;
-            max-width: 300px;
-            color: var(--text-dim);
-            font-size: 1.25rem;
-            text-align: right;
-            line-height: 1.4;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
-            pointer-events: none;
-        }
 
         /* ── MODAL SUGESTÃO ── */
         .suggest-modal-overlay {
@@ -450,9 +449,11 @@
         </div>
     </div>
 
-<!-- Botão flutuante sugestão -->
-<div class="suggest-hint">Lembrou de algum título? Envie como sugestão.</div>
-<button class="suggest-fab" onclick="openSuggestModal()">💡 Sugestão</button>
+<!-- Sugestão: texto centralizado (2 linhas) acima do botão -->
+<div class="suggest-dock">
+    <div class="suggest-hint">Lembrou de algum título?<br>Envie como sugestão.</div>
+    <button class="suggest-fab" onclick="openSuggestModal()">💡 Sugestão</button>
+</div>
 
 <!-- Modal sugestão -->
 <div class="suggest-modal-overlay" id="suggestModal">

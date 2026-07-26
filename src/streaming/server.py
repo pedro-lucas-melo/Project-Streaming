@@ -174,16 +174,19 @@ class StreamingServer:
             "carousel_rows": carousel_rows,
         }
 
-    async def _carousel_poster_rows(self, rows: int = 3, min_per_row: int = 12, max_per_row: int = 12) -> list[list[str]]:
+    async def _carousel_poster_rows(self, rows: int = 3, min_per_row: int = 20, max_per_row: int = 12) -> list[list[str]]:
         """Pôsteres de todos os títulos cadastrados (séries + filmes), para o
         carrossel decorativo de fundo da home. Metadados vêm do cache TMDB no
         banco (fetch_metadata), então após a 1ª carga é rápido.
 
-        Cada linha é limitada a max_per_row pôsteres distintos — o carrossel é
-        só decoração, e a TV (Chromium 63, GPU fraca) não deve gastar decode em
-        dezenas de imagens no load da home. Linhas curtas são repetidas até
-        min_per_row para preencher a largura e permitir loop contínuo sem
-        emenda. Resultado é cacheado (TTL) — igual em todas as páginas."""
+        max_per_row limita os pôsteres DISTINTOS (decode) — a TV (Chromium 63,
+        GPU fraca) não deve decodificar dezenas de imagens. min_per_row é o
+        total por linha APÓS repetir os distintos: o template duplica a linha
+        e anima translateX(-50%), então cada "metade" = min_per_row pôsteres.
+        Essa metade precisa ser MAIOR que a largura da tela senão sobra vazio
+        quando a linha rola pro lado oposto (a TV 4K tem viewport ~3840px;
+        20 × ~220px ≈ 4400px cobre). Resultado é cacheado (TTL, igual em todas
+        as páginas)."""
         if self._carousel_cache and (time.monotonic() - self._carousel_cache[0]) < self._carousel_ttl:
             return self._carousel_cache[1]
         posters: list[str] = []
