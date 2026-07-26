@@ -174,7 +174,7 @@ class StreamingServer:
             "carousel_rows": carousel_rows,
         }
 
-    async def _carousel_poster_rows(self, rows: int = 3, min_per_row: int = 8, max_per_row: int = 10) -> list[list[str]]:
+    async def _carousel_poster_rows(self, rows: int = 3, min_per_row: int = 12, max_per_row: int = 12) -> list[list[str]]:
         """Pôsteres de todos os títulos cadastrados (séries + filmes), para o
         carrossel decorativo de fundo da home. Metadados vêm do cache TMDB no
         banco (fetch_metadata), então após a 1ª carga é rápido.
