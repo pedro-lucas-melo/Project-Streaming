@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quem está assistindo?</title>
+    <link rel="stylesheet" href="/static/theme.css">
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background: #111;
-            color: white;
+            background-color: var(--bg-0);
+            background-image: var(--bg-app);
+            background-attachment: fixed;
+            color: var(--text);
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
@@ -48,28 +51,31 @@
         .avatar {
             width: 180px;
             height: 72px;
-            border-radius: 8px;
-            background: #333;
+            border-radius: var(--radius);
+            background: var(--glass);
+            -webkit-backdrop-filter: var(--blur);
+            backdrop-filter: var(--blur);
+            box-shadow: var(--shadow-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 3px solid transparent;
-            transition: border-color 0.15s, transform 0.15s, background 0.15s;
+            border: 3px solid var(--glass-border);
+            transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
             padding: 0 8px;
             overflow: hidden;
         }
 
         .profile-btn:hover .avatar,
         .profile-btn:focus .avatar {
-            border-color: white;
-            background: #444;
+            border-color: var(--accent);
+            box-shadow: var(--shadow);
             transform: scale(1.05);
         }
 
         .profile-btn:focus { outline: none; }
 
         .name {
-            color: #ddd;
+            color: var(--text);
             font-size: 2.5rem;
             font-weight: bold;
             letter-spacing: 0.05em;

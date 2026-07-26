@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#e50914">
     <link rel="manifest" href="/static/manifest.json">
+    <link rel="stylesheet" href="/static/theme.css">
     <title>BlackFlix</title>
 
     <style>
@@ -14,8 +15,10 @@
         html, body { height: 100%; }
 
         body {
-            background: #111;
-            color: white;
+            background-color: var(--bg-0);
+            background-image: var(--bg-app);
+            background-attachment: fixed;
+            color: var(--text);
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
@@ -71,14 +74,18 @@
         }
 
         .card {
-            background: #222;
-            border-radius: 12px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            -webkit-backdrop-filter: var(--blur);
+            backdrop-filter: var(--blur);
+            box-shadow: var(--shadow-sm);
+            border-radius: var(--radius);
             padding: 2rem 1.5rem;
             text-decoration: none;
-            color: white;
+            color: var(--text);
             font-size: 1.6rem;
             font-weight: bold;
-            transition: background 0.2s, transform 0.2s;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -88,16 +95,16 @@
         .card .icon { margin-bottom: 0.5rem; }
 
         .card:hover {
-            background: #444;
+            background: var(--surface-focus);
             transform: scale(1.05);
             cursor: pointer;
         }
 
         .card:focus {
-            background: #444;
+            background: var(--surface-focus);
             transform: scale(1.08);
             outline: none;
-            box-shadow: 0 0 0 3px #e50914;
+            box-shadow: var(--focus);
         }
 
         .card .icon {
@@ -113,7 +120,7 @@
 
         .continue-section h2 {
             font-size: 1.6rem;
-            color: #aaa;
+            color: var(--text-dim);
             font-weight: 400;
             margin-bottom: 1rem;
             letter-spacing: 0.05em;
@@ -137,36 +144,38 @@
         .continue-card {
             position: relative;
             width: 220px;
-            border-radius: 8px;
+            border-radius: var(--radius);
             overflow: hidden;
-            background: #1e1e1e;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
             cursor: pointer;
             flex-shrink: 0;
-            transition: transform 0.15s;
+            transition: transform 0.15s, box-shadow 0.15s;
         }
 
-        .continue-card:hover { transform: scale(1.04); }
-        .continue-card:focus { outline: none; transform: scale(1.06); box-shadow: 0 0 0 3px #e50914; }
+        .continue-card:hover { transform: scale(1.04); box-shadow: var(--shadow); }
+        .continue-card:focus { outline: none; transform: scale(1.06); box-shadow: var(--focus); }
 
         /* ── BOTÕES TV ── */
         .tv-btn {
             display: inline-block;
-            background: #333;
-            color: white;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
             text-decoration: none;
             padding: 14px 28px;
-            border-radius: 8px;
+            border-radius: var(--radius);
             font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
-            border: none;
             transition: background 0.15s, transform 0.15s;
         }
         .tv-btn:hover, .tv-btn:focus {
-            background: #555;
+            background: var(--surface-focus);
             outline: none;
             transform: scale(1.05);
-            box-shadow: 0 0 0 3px #e50914;
+            box-shadow: var(--focus);
         }
 
         .continue-card a.card-link {
@@ -185,7 +194,7 @@
         .continue-poster-placeholder {
             width: 220px;
             height: 330px;
-            background: #2a2a2a;
+            background: var(--surface-2);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -199,7 +208,7 @@
         .continue-title {
             font-size: 1.05rem;
             font-weight: bold;
-            color: #eee;
+            color: var(--text);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -207,7 +216,7 @@
 
         .continue-subtitle {
             font-size: 0.9rem;
-            color: #aaa;
+            color: var(--text-dim);
             margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
@@ -216,20 +225,20 @@
 
         .progress-track {
             height: 4px;
-            background: #444;
+            background: var(--surface-2);
             border-radius: 2px;
             margin-top: 8px;
         }
 
         .progress-fill {
             height: 100%;
-            background: #e50914;
+            background: var(--accent);
             border-radius: 2px;
         }
 
         .continue-pct {
             font-size: 0.85rem;
-            color: #888;
+            color: var(--text-faint);
             margin-top: 4px;
         }
 
@@ -296,14 +305,18 @@
         }
         .modal-overlay.show { display: flex; }
         .modal-box {
-            background: #222;
-            border-radius: 14px;
+            background: var(--glass-strong);
+            border: 1px solid var(--glass-border);
+            -webkit-backdrop-filter: var(--blur);
+            backdrop-filter: var(--blur);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius-lg);
             padding: 2rem 2.5rem;
             text-align: center;
             max-width: 340px;
             width: 90%;
         }
-        .modal-box p { font-size: 1.3rem; color: #ddd; margin-bottom: 1.8rem; line-height: 1.4; }
+        .modal-box p { font-size: 1.3rem; color: var(--text); margin-bottom: 1.8rem; line-height: 1.4; }
         .modal-actions { display: flex; justify-content: center; }
         .modal-actions .modal-btn { margin: 0 0.6rem; }
         .modal-btn {
@@ -314,19 +327,19 @@
             cursor: pointer;
             font-weight: bold;
         }
-        .modal-btn.confirm { background: #e50914; color: white; }
-        .modal-btn.confirm:hover { background: #c0070f; }
-        .modal-btn.confirm:focus { outline: none; background: #c0070f; box-shadow: 0 0 0 4px white; transform: scale(1.05); }
-        .modal-btn.cancel  { background: #444; color: white; }
-        .modal-btn.cancel:hover  { background: #555; }
-        .modal-btn.cancel:focus  { outline: none; background: #555; box-shadow: 0 0 0 4px white; transform: scale(1.05); }
+        .modal-btn.confirm { background: var(--accent-grad); color: white; }
+        .modal-btn.confirm:hover { filter: brightness(1.1); }
+        .modal-btn.confirm:focus { outline: none; filter: brightness(1.1); box-shadow: 0 0 0 4px white; transform: scale(1.05); }
+        .modal-btn.cancel  { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+        .modal-btn.cancel:hover  { background: var(--surface-focus); }
+        .modal-btn.cancel:focus  { outline: none; background: var(--surface-focus); box-shadow: 0 0 0 4px white; transform: scale(1.05); }
 
         /* ── BOTÃO SUGESTÃO FLUTUANTE ── */
         .suggest-fab {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #e50914;
+            background: var(--accent-grad);
             color: white;
             border: none;
             border-radius: 50px;
@@ -335,11 +348,11 @@
             font-weight: bold;
             cursor: pointer;
             z-index: 50;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-            transition: background 0.15s, transform 0.15s;
+            box-shadow: var(--shadow);
+            transition: filter 0.15s, transform 0.15s;
         }
-        .suggest-fab:hover { background: #c0070f; transform: scale(1.05); }
-        .suggest-fab:focus { background: #c0070f; transform: scale(1.05); outline: none; box-shadow: 0 0 0 4px white; }
+        .suggest-fab:hover { filter: brightness(1.1); transform: scale(1.05); }
+        .suggest-fab:focus { filter: brightness(1.1); transform: scale(1.05); outline: none; box-shadow: 0 0 0 4px white; }
 
         /* ── MODAL SUGESTÃO ── */
         .suggest-modal-overlay {
@@ -353,8 +366,12 @@
         }
         .suggest-modal-overlay.show { display: flex; }
         .suggest-modal-box {
-            background: #1a1a1a;
-            border-radius: 16px;
+            background: var(--glass-strong);
+            border: 1px solid var(--glass-border);
+            -webkit-backdrop-filter: var(--blur);
+            backdrop-filter: var(--blur);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius-lg);
             padding: 2.5rem;
             width: 90%;
             max-width: 700px;
@@ -369,36 +386,36 @@
         .suggest-search-btn { margin-left: 10px; }
         .suggest-input {
             flex: 1;
-            background: #333;
-            border: 2px solid #555;
-            color: white;
+            background: var(--surface-2);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
             padding: 14px 18px;
-            border-radius: 8px;
+            border-radius: var(--radius);
             font-size: 1.2rem;
         }
-        .suggest-input:focus { outline: none; border-color: #e50914; box-shadow: 0 0 0 2px rgba(229,9,20,0.3); }
+        .suggest-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
         .suggest-search-btn {
-            background: #e50914;
+            background: var(--accent-grad);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius);
             padding: 14px 24px;
             cursor: pointer;
             font-weight: bold;
             font-size: 1.1rem;
         }
-        .suggest-search-btn:focus { outline: none; box-shadow: 0 0 0 4px white; background: #c0070f; }
+        .suggest-search-btn:focus { outline: none; box-shadow: 0 0 0 4px white; filter: brightness(1.1); }
         .suggest-results { display: flex; flex-direction: column; margin-top: 0.5rem; }
         .suggest-result-item {
             display: flex;
             align-items: center;
             margin-bottom: 12px;
-            background: #2a2a2a;
-            border-radius: 10px;
+            background: var(--surface);
+            border-radius: var(--radius);
             padding: 12px;
             cursor: pointer;
             border: 2px solid transparent;
-            transition: border-color 0.15s;
+            transition: border-color 0.15s, background 0.15s;
             tabindex: 0;
         }
         .suggest-result-item:hover { border-color: #e50914; }
