@@ -1,0 +1,14 @@
+{# Carrossel decorativo de fundo (não clicável, não focável).
+   Requer carousel_rows no contexto (lista de listas de URLs de pôster).
+   CSS em static/theme.css (.cinebg / .cine-*). Incluir logo após <body>. #}
+{% if carousel_rows %}
+<div class="cinebg" aria-hidden="true">
+    {% for row in carousel_rows %}{% if row %}
+    <div class="cine-row">
+        <div class="cine-track cine-row-{{ loop.index }}">
+            {% for p in row %}<img class="cine-poster" src="{{ p }}" alt="" loading="lazy">{% endfor %}{% for p in row %}<img class="cine-poster" src="{{ p }}" alt="" loading="lazy">{% endfor %}
+        </div>
+    </div>
+    {% endif %}{% endfor %}
+</div>
+{% endif %}

@@ -12,6 +12,7 @@ import jinja2
 import aiohttp_jinja2
 import os
 import re
+import time
 import pathlib
 from urllib.parse import quote
 
@@ -23,6 +24,10 @@ class StreamingServer:
         self.config = ConfigManager()
         self.series_library = MediaLibrary(self.config.media_series_dir) if self.config.media_series_dir else None
         self.movies_library = MediaLibrary(self.config.media_movies_dir) if self.config.media_movies_dir else None
+        # Cache do carrossel (mesmo resultado em todas as páginas): evita refazer
+        # a varredura de metadados a cada request. (timestamp, linhas)
+        self._carousel_cache: tuple[float, list[list[str]]] | None = None
+        self._carousel_ttl = 600
         self.app = web.Application()
 
         self._setup_routes()
@@ -74,7 +79,7 @@ class StreamingServer:
     @aiohttp_jinja2.template("profiles.html")
     async def handle_profiles(self, request):
         profiles = await get_all_profiles()
-        return {"profiles": profiles}
+        return {"profiles": profiles, "carousel_rows": await self._carousel_poster_rows()}
 
     async def handle_profile_select(self, request: web.Request):
         data = await request.post()
@@ -178,7 +183,9 @@ class StreamingServer:
         só decoração, e a TV (Chromium 63, GPU fraca) não deve gastar decode em
         dezenas de imagens no load da home. Linhas curtas são repetidas até
         min_per_row para preencher a largura e permitir loop contínuo sem
-        emenda."""
+        emenda. Resultado é cacheado (TTL) — igual em todas as páginas."""
+        if self._carousel_cache and (time.monotonic() - self._carousel_cache[0]) < self._carousel_ttl:
+            return self._carousel_cache[1]
         posters: list[str] = []
         if self.series_library:
             for name in sorted(self.series_library.get_structure().keys()):
@@ -200,6 +207,7 @@ class StreamingServer:
                 out.append(padded)
             else:
                 out.append([])
+        self._carousel_cache = (time.monotonic(), out)
         return out
 
     def _profile_slug(self, profile: dict | None) -> str:
@@ -224,6 +232,7 @@ class StreamingServer:
             "profile_name": profile["name"] if profile else "",
             "profile_slug": self._profile_slug(profile),
             "page": "series",
+            "carousel_rows": await self._carousel_poster_rows(),
         }
 
     @aiohttp_jinja2.template("movies.html")
@@ -252,6 +261,7 @@ class StreamingServer:
             "profile_name": profile["name"] if profile else "",
             "profile_slug": self._profile_slug(profile),
             "page": "movies",
+            "carousel_rows": await self._carousel_poster_rows(),
         }
 
     @aiohttp_jinja2.template("series.html")
@@ -270,6 +280,7 @@ class StreamingServer:
             "profile_name": profile["name"] if profile else "",
             "profile_slug": self._profile_slug(profile),
             "page": "series",
+            "carousel_rows": await self._carousel_poster_rows(),
         }
 
     @aiohttp_jinja2.template("season.html")
@@ -293,6 +304,7 @@ class StreamingServer:
             "profile_name": profile["name"] if profile else "",
             "profile_slug": self._profile_slug(profile),
             "page": "series",
+            "carousel_rows": await self._carousel_poster_rows(),
         }
 
     @staticmethod
