@@ -1,5 +1,5 @@
-const CACHE = "streaming-v1";
-const APP_SHELL = ["/", "/series-list", "/movies"];
+const CACHE = "streaming-v2";
+const APP_SHELL = ["/series-list", "/movies"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
@@ -14,9 +14,15 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
-  // Nunca cachear vídeos ou API
   const url = new URL(e.request.url);
-  if (url.pathname.startsWith("/video") || url.pathname.startsWith("/api")) return;
+  // Network-only (nunca cacheia, nunca serve stale):
+  //   /video, /api  → conteúdo/estado dinâmico
+  //   /watch, /     → player e home dependem do episódio/progresso atual;
+  //                   servir cache velho num soluço de rede trazia episódio-fantasma
+  if (url.pathname.startsWith("/video") ||
+      url.pathname.startsWith("/api") ||
+      url.pathname.startsWith("/watch") ||
+      url.pathname === "/") return;
 
   e.respondWith(
     fetch(e.request)

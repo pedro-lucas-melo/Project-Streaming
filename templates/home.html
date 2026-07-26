@@ -275,8 +275,11 @@
             transition: opacity 0.15s, box-shadow 0.15s;
             z-index: 10;
             padding: 0;
-            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        .restart-btn svg { width: 20px; height: 20px; display: block; }
         .restart-btn:focus { opacity: 1; outline: none; box-shadow: 0 0 0 3px #e50914; background: rgba(0,90,180,0.9); }
         .continue-card:hover .restart-btn { opacity: 1; }
         .restart-btn:hover { background: rgba(0,90,180,0.8); }
@@ -461,7 +464,7 @@
                 {% for item in in_progress %}
                 <div class="continue-card" id="card-{{ loop.index }}">
                     <button class="remove-btn" data-kind="progress" data-path="{{ item.file_path | e }}" data-card="card-{{ loop.index }}" data-title="{{ item.title | e }}" onclick="removeBtnClick(event, this)" title="Remover">✕</button>
-                    <a class="restart-btn" href="/watch?path={{ item.encoded_path }}&restart=1" title="Assistir do início">⟲</a>
+                    <button class="restart-btn" data-path="{{ item.encoded_path }}" onclick="restartClick(event, this)" title="Assistir do início" aria-label="Assistir do início"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6V5zm12 0L8.5 12 18 19V5z"/></svg></button>
                     <a class="card-link" href="/watch?path={{ item.encoded_path }}">
                         {% if item.poster_url %}
                         <img class="continue-poster" src="{{ item.poster_url }}" alt="{{ item.title }}" loading="lazy">
@@ -542,6 +545,14 @@
 
 <script>
 let _pendingRemove = null;
+
+// Assistir do início: navega direto pro mesmo arquivo do card + restart=1.
+// Button (não <a href>) pra evitar prefetch/prerender da TV, que baixava vídeo em background.
+function restartClick(e, btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = "/watch?path=" + btn.dataset.path + "&restart=1";
+}
 
 function removeBtnClick(e, btn) {
     e.preventDefault();
