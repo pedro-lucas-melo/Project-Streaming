@@ -9,17 +9,21 @@ Inclui app instalável para **Samsung Smart TV (Tizen)**.
 ## ✨ Funcionalidades
 
 - ⚡ Streaming assíncrono com suporte a **Range Requests** (seek sem rebuffering)
-- 👤 **Múltiplos perfis** — cada usuário tem seu histórico e watchlist independente
-- 📺 **Continue assistindo** — retoma de onde parou, com barra de progresso; um card por série (sempre o episódio mais recente, com rótulo `T2 - E05 - Nome`)
+- 👤 **Múltiplos perfis** — cada usuário tem seu histórico de progresso independente
+- 📺 **Continue assistindo** — retoma de onde parou, com barra de progresso; um card por série (sempre o episódio mais recente, com rótulo `T2 - E05 - Nome`), com botão de reiniciar do zero
 - ⏭️ **Próximo episódio automático** — ao terminar um episódio, avança para o próximo (inclusive entre temporadas)
 - 🎥 **Biblioteca de séries** com navegação por série → temporada → episódio
 - 🎞️ **Biblioteca de filmes** com rota dedicada
 - 🖼️ **Integração TMDB** — pôsteres e metadados automáticos para séries e filmes
-- 📋 **Watchlist** — salve títulos para assistir depois
+- 💾 **Cache de pôsteres em disco** — pôsteres são servidos por `/poster/{arquivo}` a partir de `poster_cache/`; a TV nunca fala com `image.tmdb.org` (soluço de rede deixava cards em branco). Resposta com `Cache-Control: immutable`; se o download falhar, redireciona para o TMDB
+- 🎠 **Carrossel decorativo de fundo** — 3 linhas de pôsteres em auto-scroll atrás do conteúdo, em todas as telas (`templates/_carousel.html`); montagem cacheada em memória com TTL de 10 min
+- 🧭 **Breadcrumb global** — `BlackFlix › Perfil › Séries › Filmes` no topo de todas as páginas, substituindo menu lateral e botões "Voltar"
+- 🪟 **Tema glassmorphism** — design tokens compartilhados em `static/theme.css`, com degradação graciosa no webview da TV (Chromium 63 não tem `backdrop-filter`)
 - 💡 **Sugestões via Telegram** — envie sugestões de filmes/séries para um bot Telegram
 - 🖥️ Interface web com templates **Jinja2** (dark mode)
 - ▶️ Player HTML5 com controles customizados, título sobreposto (série / temporada / episódio) e fontes dimensionadas para TV
 - 🎮 **Navegação por controle remoto** — navegação espacial por setas (`static/tv-nav.js`) em todas as grades, com suporte às teclas do controle Samsung (OK, Voltar, botões de mídia)
+- 📴 **Service worker** — cache-first para pôsteres e estáticos, network-first para o resto
 - 📱 **App Tizen** — instalável em Samsung Smart TV sem loja de apps
 
 ---
@@ -32,7 +36,7 @@ Inclui app instalável para **Samsung Smart TV (Tizen)**.
 | aiohttp | 3.9+ | Servidor web assíncrono |
 | aiohttp-jinja2 | 1.6+ | Templates |
 | Jinja2 | 3.1+ | Renderização HTML |
-| aiosqlite | 0.22+ | Banco de dados (perfis, progresso, watchlist) |
+| aiosqlite | 0.22+ | Banco de dados (perfis, progresso) |
 | python-dotenv | 1.0+ | Configuração por `.env` |
 | ffmpeg | — | Conversão de mídia (script separado) |
 
@@ -43,23 +47,26 @@ Inclui app instalável para **Samsung Smart TV (Tizen)**.
 ```
 streaming-server/
 ├── src/streaming/
-│   ├── server.py        # Servidor principal, rotas
+│   ├── server.py        # Servidor principal, rotas, cache de pôster e carrossel
 │   ├── media.py         # Biblioteca de mídia (scan de diretórios)
-│   ├── database.py      # SQLite: perfis, progresso, watchlist
+│   ├── database.py      # SQLite: perfis, progresso
 │   ├── tmdb.py          # Integração com a API do TMDB
 │   └── config.py        # Configurações via .env
 ├── templates/
 │   ├── profiles.html    # Seleção de perfil
-│   ├── home.html        # Página inicial (continue assistindo + watchlist)
+│   ├── home.html        # Página inicial (continue assistindo)
 │   ├── index.html       # Lista de séries
 │   ├── series.html      # Temporadas de uma série
 │   ├── season.html      # Episódios de uma temporada
 │   ├── movies.html      # Lista de filmes
-│   └── player.html      # Player de vídeo
+│   ├── player.html      # Player de vídeo
+│   └── _carousel.html   # Parcial do carrossel decorativo de fundo
 ├── static/
+│   ├── theme.css        # Design tokens + utilitários glass (tema compartilhado)
 │   ├── tv-nav.js        # Navegação espacial por controle remoto (todas as grades)
 │   ├── manifest.json    # PWA manifest
 │   └── sw.js            # Service worker
+├── poster_cache/        # Pôsteres TMDB baixados (servidos em /poster/{arquivo})
 ├── StreamingTV/         # App Tizen para Samsung Smart TV
 │   ├── deploy.ps1       # Deploy na TV via tz install-chain
 │   └── deploy-tools/    # Ferramentas de assinatura/instalação (.wgt)
@@ -117,6 +124,13 @@ TMDB_API_READ_TOKEN=
 # Bot do Telegram para receber sugestões de filmes/séries (opcional)
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+
+# Certificados Tizen (usados por StreamingTV/deploy-tools/resign_wgt.py)
+# O script lê direto do ambiente — exporte antes de rodá-lo
+TIZEN_AUTHOR_P12=C:\Caminho\Para\author.p12
+TIZEN_DIST_P12=C:\Caminho\Para\distributor.p12
+TIZEN_AUTHOR_PWD=
+TIZEN_DIST_PWD=
 ```
 
 ### Estrutura de diretórios esperada
@@ -160,8 +174,9 @@ Para encerrar: `Ctrl+C` (shutdown limpo, sem tracebacks do asyncio).
 
 Na primeira tela, selecione um perfil. Cada perfil tem:
 - Histórico de progresso independente (retoma de onde parou)
-- Watchlist própria
 - O banco de dados (`streaming.db`) é criado automaticamente na primeira execução
+
+O breadcrumb do topo mostra o perfil ativo; clicar nele volta para a seleção de perfis (`/profiles/exit`).
 
 Para adicionar ou remover perfis, edite diretamente a tabela `profiles` em `streaming.db` ou modifique `_SEED` em `database.py`.
 
@@ -188,6 +203,8 @@ poetry run python scripts/convert.py
 ```
 
 Menu interativo: escolha séries ou filmes, selecione quais converter.
+
+⚠️ **Após a conversão, o script apaga os arquivos originais** cujo par convertido existe no destino, e remove as pastas que ficaram vazias. Os títulos apagados são listados no fim da execução — confira a pasta de destino antes de descartar a fonte.
 
 ---
 
