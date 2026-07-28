@@ -6,7 +6,8 @@
     {% for row in carousel_rows %}{% if row %}
     <div class="cine-row">
         <div class="cine-track cine-row-{{ loop.index }}">
-            {% for p in row %}<img class="cine-poster" src="{{ p }}" alt="" decoding="async">{% endfor %}{% for p in row %}<img class="cine-poster" src="{{ p }}" alt="" decoding="async">{% endfor %}
+            {# onerror esconde o img: pôster quebrado virava caixa vazia de 200px (buraco na linha) #}
+            {% for p in row %}<img class="cine-poster" src="{{ p }}" alt="" decoding="async" onerror="this.style.display='none'">{% endfor %}{% for p in row %}<img class="cine-poster" src="{{ p }}" alt="" decoding="async" onerror="this.style.display='none'">{% endfor %}
         </div>
     </div>
     {% endif %}{% endfor %}

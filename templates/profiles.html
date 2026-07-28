@@ -10,9 +10,9 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
+            /* gradiente fica em camada fixa (body::before, theme.css) —
+               background-attachment: fixed no body mata o scroll composto na TV */
             background-color: var(--bg-0);
-            background-image: var(--bg-app);
-            background-attachment: fixed;
             color: var(--text);
             font-family: var(--font);
             display: flex;

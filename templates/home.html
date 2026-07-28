@@ -15,9 +15,9 @@
         html, body { height: 100%; }
 
         body {
+            /* gradiente fica em camada fixa (body::before, theme.css) —
+               background-attachment: fixed no body mata o scroll composto na TV */
             background-color: var(--bg-0);
-            background-image: var(--bg-app);
-            background-attachment: fixed;
             color: var(--text);
             font-family: var(--font);
             display: flex;
@@ -34,7 +34,7 @@
             min-height: 0;
             width: 100%;
             overflow-y: auto;
-            scroll-behavior: smooth;
+            /* sem scroll-behavior: smooth — na TV o scroll suave engasga */
             text-align: left;
             /* desce o conteúdo pra respirar abaixo do breadcrumb + folga do anel de foco */
             padding: 3.5rem 34px 3rem;
@@ -728,8 +728,9 @@ if (window.performance && window.performance.navigation && window.performance.na
         if (!sc || !sc.contains(el)) return;
         var r = el.getBoundingClientRect(), c = sc.getBoundingClientRect();
         var delta = (r.top + r.height/2) - (c.top + c.height/2);
-        // scrollTo (não scrollTop +=) para respeitar scroll-behavior: smooth
-        sc.scrollTo({ top: sc.scrollTop + delta, behavior: "smooth" });
+        // behavior "auto" (instantâneo): smooth roda na main thread do
+        // Chromium 63 e engasga a navegação por controle na TV
+        sc.scrollTo({ top: sc.scrollTop + delta, behavior: "auto" });
     }
 
     function closeOpenModal() {

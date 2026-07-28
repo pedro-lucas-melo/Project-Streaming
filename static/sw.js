@@ -1,4 +1,4 @@
-const CACHE = "streaming-v2";
+const CACHE = "streaming-v3";
 const APP_SHELL = ["/series-list", "/movies"];
 
 self.addEventListener("install", (e) => {
@@ -23,6 +23,24 @@ self.addEventListener("fetch", (e) => {
       url.pathname.startsWith("/api") ||
       url.pathname.startsWith("/watch") ||
       url.pathname === "/") return;
+
+  // Pôsteres e estáticos: cache-first (conteúdo imutável) — não refaz download
+  // a cada página nem deixa card em branco num soluço de rede.
+  if (url.pathname.startsWith("/poster/") || url.pathname.startsWith("/static/")) {
+    e.respondWith(
+      caches.match(e.request).then((hit) =>
+        hit ||
+        fetch(e.request).then((res) => {
+          if (res.ok && e.request.method === "GET") {
+            const clone = res.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, clone));
+          }
+          return res;
+        })
+      )
+    );
+    return;
+  }
 
   e.respondWith(
     fetch(e.request)

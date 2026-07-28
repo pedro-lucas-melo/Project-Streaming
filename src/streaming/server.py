@@ -1,3 +1,4 @@
+import aiohttp
 from aiohttp import web
 from streaming.config import ConfigManager
 from streaming.media import MediaLibrary
@@ -17,6 +18,13 @@ import pathlib
 from urllib.parse import quote
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+
+# Pôsteres TMDB são servidos via /poster/{arquivo} com cache em disco: a TV
+# nunca fala com image.tmdb.org (soluço de rede externa deixava cards em branco
+# no carrossel). Nome de arquivo TMDB é um hash simples + extensão.
+POSTER_CACHE_DIR = BASE_DIR / "poster_cache"
+_POSTER_FNAME_RE = re.compile(r"[A-Za-z0-9_-]+\.(?:jpg|jpeg|png)")
+_TMDB_IMG_PREFIX = "https://image.tmdb.org/t/p/"
 
 
 class StreamingServer:
@@ -60,6 +68,7 @@ class StreamingServer:
         # AVALIAÇÃO DESABILITADA — remover comentário para reativar
         # self.app.router.add_get("/api/rating", self.handle_rating_get)
         # self.app.router.add_post("/api/rating", self.handle_rating_post)
+        self.app.router.add_get("/poster/{fname}", self.handle_poster)
         self.app.router.add_static("/static", BASE_DIR / "static")
         self.app.on_startup.append(self._on_startup)
 
@@ -144,7 +153,7 @@ class StreamingServer:
                     "type": "series",
                     "title": series_name,
                     "subtitle": subtitle,
-                    "poster_url": meta.get("poster_url"),
+                    "poster_url": self._poster_src(meta.get("poster_url")),
                     "pct": pct,
                     "encoded_path": encoded_path,
                     "file_path": fp,
@@ -159,7 +168,7 @@ class StreamingServer:
                     "type": "movie",
                     "title": movie_name,
                     "subtitle": None,
-                    "poster_url": meta.get("poster_url"),
+                    "poster_url": self._poster_src(meta.get("poster_url")),
                     "pct": pct,
                     "encoded_path": encoded_path,
                     "file_path": fp,
@@ -173,6 +182,50 @@ class StreamingServer:
             "in_progress": enriched,
             "carousel_rows": carousel_rows,
         }
+
+    def _poster_src(self, poster_url: str | None) -> str | None:
+        """Converte URL de pôster TMDB em URL local (/poster/x.jpg).
+        URLs não-TMDB (ou nome de arquivo inesperado) passam intactas."""
+        if not poster_url or not poster_url.startswith(_TMDB_IMG_PREFIX):
+            return poster_url
+        fname = poster_url.rsplit("/", 1)[-1]
+        if not _POSTER_FNAME_RE.fullmatch(fname):
+            return poster_url
+        return f"/poster/{fname}"
+
+    async def handle_poster(self, request: web.Request):
+        """Serve pôster do cache em disco; baixa do TMDB na 1ª vez.
+        Se o download falhar, redireciona para o TMDB (degrada para o
+        comportamento antigo em vez de quebrar a imagem)."""
+        fname = request.match_info["fname"]
+        if not _POSTER_FNAME_RE.fullmatch(fname):
+            raise web.HTTPNotFound()
+        fpath = POSTER_CACHE_DIR / fname
+        if not fpath.is_file():
+            url = f"{_TMDB_IMG_PREFIX}w300/{fname}"
+            try:
+                POSTER_CACHE_DIR.mkdir(exist_ok=True)
+                timeout = aiohttp.ClientTimeout(total=15)
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    async with session.get(url) as resp:
+                        if resp.status != 200:
+                            raise web.HTTPNotFound(reason="Pôster não encontrado no TMDB")
+                        data = await resp.read()
+                # nome temporário único por request → downloads concorrentes do
+                # mesmo pôster não corrompem o arquivo (os.replace é atômico)
+                tmp = POSTER_CACHE_DIR / f"{fname}.{time.monotonic_ns()}.tmp"
+                tmp.write_bytes(data)
+                os.replace(tmp, fpath)
+            except web.HTTPException:
+                raise
+            except Exception:
+                raise web.HTTPFound(url)
+        ctype = "image/png" if fname.lower().endswith(".png") else "image/jpeg"
+        return web.FileResponse(path=fpath, headers={
+            "Content-Type": ctype,
+            # nome TMDB é um hash de conteúdo → imutável, cache agressivo na TV
+            "Cache-Control": "public, max-age=31536000, immutable",
+        })
 
     async def _carousel_poster_rows(self, rows: int = 3, min_per_row: int = 20, max_per_row: int = 12) -> list[list[str]]:
         """Pôsteres de todos os títulos cadastrados (séries + filmes), para o
@@ -194,12 +247,12 @@ class StreamingServer:
             for name in sorted(self.series_library.get_structure().keys()):
                 meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
                 if meta.get("poster_url"):
-                    posters.append(meta["poster_url"])
+                    posters.append(self._poster_src(meta["poster_url"]))
         if self.movies_library:
             for v in self.movies_library.list_videos():
                 meta = await fetch_metadata(self.config.tmdb_token, self._strip_media_ext(v["name"]), "movie")
                 if meta.get("poster_url"):
-                    posters.append(meta["poster_url"])
+                    posters.append(self._poster_src(meta["poster_url"]))
         out: list[list[str]] = []
         for i in range(rows):
             row = posters[i::rows][:max_per_row]
@@ -229,7 +282,7 @@ class StreamingServer:
         series = []
         for name in series_names:
             meta = await fetch_metadata(self.config.tmdb_token, name, "tv")
-            series.append({"name": name, "poster_url": meta.get("poster_url"), "encoded_name": quote(name)})
+            series.append({"name": name, "poster_url": self._poster_src(meta.get("poster_url")), "encoded_name": quote(name)})
         return {
             "series": series,
             "profile_name": profile["name"] if profile else "",
@@ -258,7 +311,7 @@ class StreamingServer:
         movies = []
         for m in movies_raw:
             meta = await fetch_metadata(self.config.tmdb_token, m["name"], "movie")
-            movies.append({**m, "poster_url": meta.get("poster_url"), "encoded_path": quote(m["path"])})
+            movies.append({**m, "poster_url": self._poster_src(meta.get("poster_url")), "encoded_path": quote(m["path"])})
         return {
             "movies": movies,
             "profile_name": profile["name"] if profile else "",
